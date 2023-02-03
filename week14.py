@@ -23,9 +23,10 @@ def RK_step(h,x,t,f): # h: time_step, x = current solution, t = current time, f 
 
 def solve_to(func, x0, t, deltat_max, method): # Method == 1: EULER, method == 2: RUNGE-KUTTA
 
+    counter = 0
     x_old = x0
-    x = np.array([])
     t_space = np.arange(0,t,deltat_max)
+    x = np.zeros(len(t_space))
 
     if method == 1:  
         # Perform integration of ODE function using EULER METHOD in range t
@@ -33,7 +34,8 @@ def solve_to(func, x0, t, deltat_max, method): # Method == 1: EULER, method == 2
         for i in t_space:
             x_new = euler_step(deltat_max,x_old,f(x_old, i))
             x_old = x_new
-            x = np.append(x, x_new)
+            x[counter] = x_new
+            counter += 1
         return [x,t_space]
 
     else: # Perform integration of ODE function using RUNGE-KUTTA method in range t
@@ -41,17 +43,26 @@ def solve_to(func, x0, t, deltat_max, method): # Method == 1: EULER, method == 2
         for i in t_space:
             x_new = RK_step(deltat_max, x_old, i,f)
             x_old = x_new
-            x = np.append(x,x_new)
+            x[counter] = x_new
+            counter += 1
         return [x,t_space]
 
 
-[x,t_space] = solve_to(f,1,1,0.012,1)
-
-#%%
+[x,t_space] = solve_to(f,1,1,0.01,1)
 
 plt.plot(t_space,x)
 plt.show()
 
+def error_func(method,deltat_min, delta_t_max, t):
+
+    counter = 0
+    x_true = np.exp(t)
+    error = np.array([])
+
+    for i in np.linspace(0,1**-5,1000):
+
+        [x, t_space] = solve_to(f,1,1,j,i)
+        
 
 
 
