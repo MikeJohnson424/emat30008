@@ -1,8 +1,10 @@
+#%%
+
 
 import numpy as np
 import matplotlib.pyplot as plt
 
-
+#%% 
 def f(x,t=0): # Define ODE problem
 
     x_dot = x
@@ -48,22 +50,38 @@ def solve_to(func, x0, t, deltat_max, method): # Method == 1: EULER, method == 2
         return [x,t_space]
 
 
-[x,t_space] = solve_to(f,1,1,0.01,1)
+""" [x,t_space] = solve_to(f,1,1,0.01,2)
 
 plt.plot(t_space,x)
-plt.show()
+plt.show() """
 
-def error_func(method,deltat_min, delta_t_max, t):
+#%%
+
+def error_func(method,deltat_min, deltat_max, t): # Method = 1 or 2 = euler or RK, delta t min and max is range of time-steps to calculate error for, t is time at which we want solution
 
     counter = 0
     x_true = np.exp(t)
-    error = np.array([])
+    t_step_space = np.linspace(deltat_min,deltat_max,1000)
+    error = np.zeros(len(t_step_space))
 
-    for i in np.linspace(0,1**-5,1000):
+    for i in t_step_space:
 
-        [x, t_space] = solve_to(f,1,1,j,i)
+        [x, t_space] = solve_to(f,1,t,i,method)
+        error[counter] = abs(x[-1]-x_true)
+        counter +=1
+
+    return [error, t_step_space]
+
+[error, t_step_space] = error_func(2,0.1,0.00001, 1)
+
+plt.xscale("log")
+plt.yscale("log")
+plt.plot(t_step_space,error)
+plt.show()
         
 
 
 
 
+
+# %%
