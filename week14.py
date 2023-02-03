@@ -6,13 +6,14 @@ import matplotlib.pyplot as plt
 
 #%% 
 def f(x,t=0): # Define ODE problem
+    x_dot = np.zeros(len(x))
+    x_dot[0] = x[1]
+    x_dot[1] = -x[0]
 
-    x_dot = x
-    return(x_dot)
-
+    return x_dot
 
 def euler_step(h,x_n, f): # define function to compute a single euler step
-    x_n1 = x_n + h*f
+    x_n1 = x_n + h*f(x_n)
     return x_n1
 
 def RK_step(h,x,t,f): # h: time_step, x = current solution, t = current time, f = ODE function
@@ -23,20 +24,26 @@ def RK_step(h,x,t,f): # h: time_step, x = current solution, t = current time, f 
     x_n1 = x + (h/6)*(k1+2*k2+2*k3+k4)
     return x_n1
 
+b = euler_step(0.01,[1,0],f)
+g = RK_step(0.1,[1,0],0,f)
+print(str(b) + 'and' + str(g))
+
+
+#%%
 def solve_to(func, x0, t, deltat_max, method): # Method == 1: EULER, method == 2: RUNGE-KUTTA
 
     counter = 0
     x_old = x0
-    t_space = np.arange(0,t,deltat_max)
-    x = np.zeros(len(t_space))
+    t_space = np.arange(0,t+deltat_max,deltat_max)
+    x = np.zeros((len(x0),len(t_space)))
 
     if method == 1:  
         # Perform integration of ODE function using EULER METHOD in range t
 
         for i in t_space:
-            x_new = euler_step(deltat_max,x_old,f(x_old, i))
+            x_new = euler_step(deltat_max,x_old,f)
             x_old = x_new
-            x[counter] = x_new
+            x[:,counter] = x_new
             counter += 1
         return [x,t_space]
 
@@ -45,15 +52,15 @@ def solve_to(func, x0, t, deltat_max, method): # Method == 1: EULER, method == 2
         for i in t_space:
             x_new = RK_step(deltat_max, x_old, i,f)
             x_old = x_new
-            x[counter] = x_new
+            x[:,counter] = x_new
             counter += 1
         return [x,t_space]
 
+[x,t_space] = solve_to(f,[1,0],1,0.01,2)
 
-""" [x,t_space] = solve_to(f,1,1,0.01,2)
 
-plt.plot(t_space,x)
-plt.show() """
+plt.plot(x[1],x[0])
+plt.show
 
 #%%
 
@@ -72,11 +79,13 @@ def error_func(method,deltat_min, deltat_max, t): # Method = 1 or 2 = euler or R
 
     return [error, t_step_space]
 
-[error, t_step_space] = error_func(2,0.1,0.00001, 1)
+[error, t_step_space] = error_func(1,0.0000001,0.01, 1)
 
 plt.xscale("log")
 plt.yscale("log")
 plt.plot(t_step_space,error)
+plt.ylabel('Error')
+plt.xlabel('Time-Step')
 plt.show()
         
 
