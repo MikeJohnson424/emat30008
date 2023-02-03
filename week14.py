@@ -1,14 +1,14 @@
+
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-#%%
 def f(x,t=0): # Define ODE problem
 
     x_dot = x
     return(x_dot)
 
-#%%
+
 def euler_step(h,x_n, f): # define function to compute a single euler step
     x_n1 = x_n + h*f
     return x_n1
@@ -42,6 +42,16 @@ def solve_to(func, x0, t, deltat_max):
     else:
         
         for i in range(t_steps):
-            x_new = RK_step(deltat_max, x_old, )
+            x_new = RK_step(deltat_max, x_old, i*deltat_max,f)
+            x_old = x_new
+            x = np.append(x,x_new)
+        return [x,t_steps]
 
+
+[x,t_steps] = solve_to(f,1,1,0.01)
+
+#%%
+
+plt.plot(range(t_steps),x)
+plt.show()
 
