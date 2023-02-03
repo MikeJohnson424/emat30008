@@ -23,35 +23,36 @@ def RK_step(h,x,t,f): # h: time_step, x = current solution, t = current time, f 
 
 def solve_to(func, x0, t, deltat_max, method): # Method == 1: EULER, method == 2: RUNGE-KUTTA
 
-    
-    t_steps = int(t/deltat_max)
     x_old = x0
     x = np.array([])
+    t_space = np.arange(0,t,deltat_max)
 
     if method == 1:  
         # Perform integration of ODE function using EULER METHOD in range t
 
-        for i in range(t_steps):
-            x_new = euler_step(deltat_max,x_old,f(x_old, i*deltat_max))
+        for i in t_space:
+            x_new = euler_step(deltat_max,x_old,f(x_old, i))
             x_old = x_new
             x = np.append(x, x_new)
-        return [x,t_steps]
+        return [x,t_space]
 
     else: # Perform integration of ODE function using RUNGE-KUTTA method in range t
         
-        for i in range(t_steps):
-            x_new = RK_step(deltat_max, x_old, i*deltat_max,f)
+        for i in t_space:
+            x_new = RK_step(deltat_max, x_old, i,f)
             x_old = x_new
             x = np.append(x,x_new)
-        return [x,t_steps]
+        return [x,t_space]
 
 
-[x,t_steps] = solve_to(f,1,1,0.01,1)
+[x,t_space] = solve_to(f,1,1,0.012,1)
 
 #%%
 
-plt.plot(range(t_steps),x)
+plt.plot(t_space,x)
 plt.show()
+
+
 
 
 
