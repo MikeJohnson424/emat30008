@@ -31,8 +31,6 @@ def RK_step(h,x,t,f): # h: time_step, x = current solution, t = current time, f 
     x_n1 = x + (h/6)*(k1+2*k2+2*k3+k4)
     return x_n1
 
-#%%
-
 def solve_to(func, x0, t, deltat_max, method): # Method == 1: EULER, method == 2: RUNGE-KUTTA
 
     counter = 0
@@ -86,19 +84,6 @@ def solve_to(func, x0, t, deltat_max, method): # Method == 1: EULER, method == 2
                 counter += 1
             return [x,t_space]
 
-
-
-[x,t_space] = solve_to(VDP,[1,0],10,0.01,1)
-
-#%%
-plt.plot(x[1],x[0])
-plt.show
-
-#%%
-plt.plot(t_space,x)
-plt.show
-
-#%%
 def error_func(method,deltat_min, deltat_max, t): # Method = 1 or 2 = euler or RK, delta t min and max is range of time-steps to calculate error for, t is time at which we want solution
 
     counter = 0
@@ -114,13 +99,45 @@ def error_func(method,deltat_min, deltat_max, t): # Method = 1 or 2 = euler or R
 
     return [error, t_step_space]
 
-""" [error, t_step_space] = error_func(1,0.0000001,0.01, 1)
-
-plt.xscale("log")
-plt.yscale("log")
-plt.plot(t_step_space,error)
-plt.ylabel('Error')
-plt.xlabel('Time-Step')
-plt.show() """
         
 
+
+# %% # Produce and plot all results
+
+[error_euler, t_step_space] = error_func(1,0.0000001,0.01, 1)
+[error_RK, t_step_space] = error_func(2,0.0000001,0.01, 1)
+
+diff = abs(error_euler-error_RK)
+idx = diff == min(diff)
+t_step_equal_error = t_step_space[idx] # Time step for which error is equal in both methods
+
+[x_2d,t_space_2d] = solve_to(func = g, x0 = [1,0], t = 100, deltat_max = 0.01, method = 1) # Results for 2-D system in question 3
+[x_1d,t_space] = solve_to(func = f, x0 = 1, t = 1, deltat_max = 0.01, method = 1) # Results for first order system in question 1
+
+#%%
+fig, axs = plt.subplots(2, 2)
+axs[0, 0].plot(t_space,x_1d)
+axs[0, 0].set_title('Solution x(t) = e^t')
+axs[0, 0].set(xlabel='t', ylabel='e^t')
+
+
+axs[0, 1].plot(t_step_space, error_euler, 'tab:blue')
+axs[0, 1].plot(t_step_space, error_RK, 'tab:orange')
+axs[0, 1].set_title('Error')
+axs[0, 1].loglog()
+axs[0, 1].legend(loc="upper left")
+axs[0, 1].set(xlabel='Time-Step', ylabel='Error')
+
+axs[1, 0].plot(x_2d[0], x_2d[1], 'tab:green')
+axs[1, 0].set_title('Phase Portrait')
+
+
+axs[1, 1].plot(t_space_2d, x_2d[0],  'tab:red')
+axs[1, 1].plot(t_space_2d, x_2d[1], 'tab:purple')
+axs[1, 1].set_title('Solution for question 3')
+
+# Hide x labels and tick labels for top plots and y ticks for right plots.
+for ax in axs.flat:
+    ax.label_outer()
+
+# %%
