@@ -19,6 +19,7 @@ def g(x,t=0): # Define ODE: d2xdt2 = -x
     x_dot[1] = -x[0]
     return x_dot
 
+
 def euler_step(deltat_max,x_n, f): # define function to compute a single euler step
     x_n1 = x_n + deltat_max*f(x_n)
     return x_n1
@@ -76,6 +77,7 @@ def error_func(deltat_min,deltat_max):
             counter +=1
 
     return [error,t_step_space]
+
 
 
 # %% # Produce and plot all results
