@@ -49,7 +49,7 @@ def solve_to(func, x0, t, deltat_max, method): # Method == 1: EULER, method == 2
             x_new = euler_step(deltat_max,x_old,func)
             x_old = x_new
             counter += 1
-        return [x,t_space]
+    
 
     else: # Perform integration of ODE function using RUNGE-KUTTA method in range t
             
@@ -58,7 +58,10 @@ def solve_to(func, x0, t, deltat_max, method): # Method == 1: EULER, method == 2
             x_new = RK_step(deltat_max, x_old, i,func)
             x_old = x_new
             counter += 1
-        return [x,t_space]
+
+    x = x.T
+    return [x,t_space]
+ 
  
 def error_func(deltat_min,deltat_max):
 
