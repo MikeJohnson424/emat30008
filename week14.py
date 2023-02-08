@@ -59,7 +59,6 @@ def solve_to(func, x0, t, deltat_max, method): # Method == 1: EULER, method == 2
             x_old = x_new
             counter += 1
 
-    x = x.T
     return [x,t_space]
  
  
