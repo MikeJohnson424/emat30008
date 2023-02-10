@@ -32,7 +32,7 @@ def RK_step(h,x,t,func): # h: time_step, x = current solution, t = current time,
     x_n1 = x + (h/6)*(k1+2*k2+2*k3+k4)
     return x_n1
 
-def solve_to(func, x0, t, deltat_max, method): # Method == 1: EULER, method == 2: RUNGE-KUTTA
+def solve_to(func, x0, t, deltat_max=0.01, method=2): # Method == 1: EULER, method == 2: RUNGE-KUTTA
 
     counter = 0
     x_old = np.array(x0)
