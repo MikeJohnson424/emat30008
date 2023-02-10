@@ -25,27 +25,25 @@ plt.show()
 
 #%%
  
+def limit_cycle_solver(init, func):
 
+    def lim_cycle_problem(init):
+        x0 = init[0:2]
+        [x, t_space] = solve_to(func,x0,100)
+        x_dot0 = x[1,0]
+        sol = x[:,-1]
 
-def lim_cycle_problem(init):
-    x0 = init[0:2]
-    [x, t_space] = solve_to(PPM,x0,100)
-    x_dot0 = x[1,0]
-    sol = x[:,-1]
+        return np.hstack((x[:,0]-sol,x_dot0))
 
-    return np.hstack((x[:,0]-sol,x_dot0))
+    ans = fsolve(lim_cycle_problem,[init])
 
-ans = fsolve(lim_cycle_problem,[5,2,6])
+    return ans
+
+ans = limit_cycle_solver([1,2,1],PPM)
+
 print(ans)
 
 
 
-#%%
 
-def test(x):
-    y = 3*x[0]+2*x[1]
-    return y
-
-fsolve(test,[2,1])
 # %%
-
