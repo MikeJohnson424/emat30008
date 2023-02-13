@@ -5,19 +5,17 @@ import matplotlib.pyplot as plt
 #%%
 
 def VDP(x,t=0): # Define ODE: Van Der Pol Oscillator
-    x_dot = np.zeros(len(x))
-    x_dot[0] = x[1]
-    x_dot[1] = (1-x[0]**2)*x[1]-x[0]
-    return x_dot
+    x_dot0 = x[1]
+    x_dot1 = (1-x[0]**2)*x[1]-x[0]
+    return np.hstack((x_dot0,x_dot1))
 
 def f(x,t=0): # Define ODE: dxdt = x, solution: x(t) = x0*exp(x)
     return(x)
 
 def g(x,t=0): # Define ODE: d2xdt2 = -x
-    x_dot=np.zeros(len(x))
-    x_dot[0] = x[1]
-    x_dot[1] = -x[0]
-    return x_dot
+    x_dot0 = x[1]
+    x_dot1 = -x[0]
+    return np.hstack((x_dot0,x_dot1))
 
 
 def euler_step(deltat_max,x_n, f): # define function to compute a single euler step

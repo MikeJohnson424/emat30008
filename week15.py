@@ -8,11 +8,10 @@ from scipy.integrate import odeint, solve_ivp, solve_bvp
 
 
 #%%
-def PPM(x,t=0,a=1,b=0.2,d=0.1):
-    x_dot = np.zeros(len(x))
-    x_dot[0] = x[0]*(1-x[0])-(a*x[0]*x[1])/(d+x[0])
-    x_dot[1] = b*x[1]*(1-x[1]/x[0])
-    return x_dot
+def PPM(x,t=0,a=1,b=0.25,d=0.1):
+    x_dot0 = x[0]*(1-x[0])-(a*x[0]*x[1])/(d+x[0])
+    x_dot1 = b*x[1]*(1-x[1]/x[0])
+    return np.hstack((x_dot0,x_dot1))
 
 # At b = 0.26 a stable limit cycle is created
 
@@ -21,10 +20,6 @@ def PPM(x,t=0,a=1,b=0.2,d=0.1):
 #plt.plot(t_space,x[0])
 plt.plot(x[0],x[1])
 plt.show()
-
-
-
-#%%
  
 def limit_cycle_solver(init, func):
 
@@ -40,16 +35,20 @@ def limit_cycle_solver(init, func):
 
     ans = fsolve(lim_cycle_problem,init)
 
-    return ans
+    sol = ans[0:-1]
+    T = ans[-1]
+
+    return [sol, T]
 
 
 #%%
 
-ans = limit_cycle_solver([1,0.5,2],PPM)
+[sol, T] = limit_cycle_solver([6,0.5,5],PPM)
 
-print(ans)
+print("Period = " + str(T))
 
-[x,t_space] = solve_to(PPM,ans[0:2],100,0.01,2)
+[x,t_space] = solve_to(PPM,sol,100,0.01,2)
+
 
 plt.plot(x[0],x[1])
 plt.show()
