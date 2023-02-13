@@ -23,6 +23,21 @@ plt.show()
  
 def limit_cycle_solver(init, func):
 
+
+    """
+    A function that will find, if present, limit cycles in an ODE system as specified by 
+    the user.
+
+    Parameters
+    ----------
+    init: initial guess in form [x0,y0,T] where first two elements are state at t - 0
+    and T is the period.
+
+    Returns
+    -------
+    Solution for initial state and also period
+
+    """
     def lim_cycle_problem(init):
         x0 = init[0:2]
         T = init[2]
