@@ -36,6 +36,9 @@ def solve_to(func, x0, t, deltat_max=0.01, method=2): # Method == 1: EULER, meth
     x_old = np.array(x0)
     t_space = np.arange(0,t+deltat_max,deltat_max)
 
+    if np.remainder(t+deltat_max, deltat_max) != 0:
+        t_space = np.hstack((t_space,t))
+
 
     x = np.zeros([len(x_old),len(t_space)])
 
