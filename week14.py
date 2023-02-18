@@ -56,7 +56,12 @@ def solve_to(func, x0, t, deltat_max=0.01, method=2): # Method == 1: EULER, meth
             x_old = x_new
             counter += 1
 
-    return [x,t_space]
+    class result:
+        def __init__(self,x,t_space):
+            self.x = x
+            self.t_space = t_space
+
+    return result(x, t_space)
   
 def error_func(deltat_min,deltat_max):
 
@@ -70,7 +75,7 @@ def error_func(deltat_min,deltat_max):
         counter = 0
         for j in t_step_space:
             
-            [x,t] = solve_to(f,[1],1,j,i)
+            x = solve_to(f,[1],1,j,i).x
             error[i-1,counter] = abs(x[0,-1]-x_true)
             counter +=1
 
@@ -81,13 +86,18 @@ def error_func(deltat_min,deltat_max):
 
 [error, t_step_space] = error_func(10**-5,0.01)
 
-[x_2d,t_space_2d] = solve_to(func = g, x0 = [1,0], t = 100, deltat_max = 0.01, method = 1) # Results for 2-D system in question 3
-[x_1d,t_space] = solve_to(func = f, x0 = [1], t = 1, deltat_max = 0.01, method = 1) # Results for first order system in question 1
+result_2d = solve_to(func = g, x0 = [1,0], t = 100, deltat_max = 0.01, method = 1) # Results for 2-D system in question 3
+result_1d = solve_to(func = f, x0 = [1], t = 1, deltat_max = 0.01, method = 1) # Results for first order system in question 1
 
+x_1d = result_1d.x
+t_space = result_1d.t_space
+
+x_2d = result_2d.x
+t_space_2d = result_2d.t_space
 
 #%%
-
-""" fig, axs = plt.subplots(2, 2)
+""" 
+fig, axs = plt.subplots(2, 2)
 axs[0, 0].plot(t_space,x_1d[0])
 axs[0, 0].set_title('Solution x(t) = e^t')
 axs[0, 0].set(xlabel='t', ylabel='e^t')
@@ -111,4 +121,6 @@ axs[1, 1].set_title('Solution for question 3')
 # Hide x labels and tick labels for top plots and y ticks for right plots.
 for ax in axs.flat:
     ax.label_outer()
+
  """
+# %%
