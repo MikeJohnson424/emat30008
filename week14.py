@@ -36,10 +36,6 @@ def solve_to(func, x0, t, deltat_max=0.01, method=2): # Method == 1: EULER, meth
     x_old = np.array(x0)
     t_space = np.arange(0,t+deltat_max,deltat_max)
 
-    if np.remainder(t+deltat_max, deltat_max) != 0:
-        t_space = np.hstack((t_space,t))
-
-
     x = np.zeros([len(x_old),len(t_space)])
 
     if method == 1:  
@@ -61,8 +57,7 @@ def solve_to(func, x0, t, deltat_max=0.01, method=2): # Method == 1: EULER, meth
             counter += 1
 
     return [x,t_space]
- 
- 
+  
 def error_func(deltat_min,deltat_max):
 
     x_true  = np.exp(1)
@@ -82,7 +77,6 @@ def error_func(deltat_min,deltat_max):
     return [error,t_step_space]
 
 
-
 # %% # Produce and plot all results
 
 [error, t_step_space] = error_func(10**-5,0.01)
@@ -93,7 +87,7 @@ def error_func(deltat_min,deltat_max):
 
 #%%
 
-fig, axs = plt.subplots(2, 2)
+""" fig, axs = plt.subplots(2, 2)
 axs[0, 0].plot(t_space,x_1d[0])
 axs[0, 0].set_title('Solution x(t) = e^t')
 axs[0, 0].set(xlabel='t', ylabel='e^t')
@@ -117,5 +111,4 @@ axs[1, 1].set_title('Solution for question 3')
 # Hide x labels and tick labels for top plots and y ticks for right plots.
 for ax in axs.flat:
     ax.label_outer()
-
-# %%
+ """
