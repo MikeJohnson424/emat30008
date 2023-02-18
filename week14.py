@@ -34,7 +34,7 @@ def solve_to(func, x0, t, deltat_max=0.01, method=2): # Method == 1: EULER, meth
 
     counter = 0
     x_old = np.array(x0)
-    t_space = np.arange(0,t+deltat_max,deltat_max)
+    t_space = np.hstack((np.arange(0,t,deltat_max),t))
 
     x = np.zeros([len(x_old),len(t_space)])
 
