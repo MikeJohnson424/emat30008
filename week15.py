@@ -8,47 +8,63 @@ from scipy.integrate import odeint, solve_ivp, solve_bvp
 
 
 #%%
-def PPM(x,t=0,a=1,b=0.25,d=0.1):
+def PPM(x,t=0,a=1,b=0.2,d=0.1):
     x_dot0 = x[0]*(1-x[0])-(a*x[0]*x[1])/(d+x[0])
     x_dot1 = b*x[1]*(1-x[1]/x[0])
     return np.hstack((x_dot0,x_dot1))
 
-# At b = 0.26 a stable limit cycle is created
-
-[x,t_space] = solve_to(PPM,[0.4,0.4],100,0.01,2)
+[x,t_space] = solve_to(PPM,[0.58,0.27],21,0.01,2)
 
 #plt.plot(t_space,x[0])
 plt.plot(x[0],x[1])
 plt.show()
- 
+
+
+#%%
+
+""" def lim_cycle_problem(func, init):
+
+    x0 = init[0:2]
+    T = init[-1]
+    [x, t_space] = solve_to(func,x0,T)
+    sol = x[:,-1]
+
+    dx_dt0 = func(x0)[0]
+
+    return np.hstack((x0-sol, dx_dt0)) """
+
+def lim_cycle_problem(func,init):
+
+    x0 = init[0:-1]
+    T = init[-1]
+    sol = solve_ivp(func,[0,T],x0).y[:,-1]
+    phase_con = func(0, x0)[0]
+
+    return np.hstack((x0-sol,phase_con))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#%%
+"""
 def limit_cycle_solver(init, func):
 
-
-    """
-    A function that will find, if present, limit cycles in an ODE system as specified by 
-    the user.
-
-    Parameters
-    ----------
-    init: initial guess in form [x0,y0,T] where first two elements are state at t - 0
-    and T is the period.
-
-    Returns
-    -------
-    Solution for initial state and also period
-
-    """
-    def lim_cycle_problem(init):
-        x0 = init[0:2]
-        T = init[2]
-        [x, t_space] = solve_to(func,x0,T)
-        x_dot0 = PPM(x0)
-        dx_dt0 = x_dot0[0]
-        sol = x[:,-1]
-
-        return np.hstack((x[:,0]-sol,dx_dt0))
-
-    ans = fsolve(lim_cycle_problem,init)
+    ans = fsolve(lambda x: lim_cycle_problem(func, x),init)
 
     sol = ans[0:-1]
     T = ans[-1]
@@ -56,13 +72,15 @@ def limit_cycle_solver(init, func):
     return [sol, T]
 
 
+
 #%%
 
-[sol, T] = limit_cycle_solver([6,0.5,5],PPM)
+[sol, T] = limit_cycle_solver([0.58,0.27,25],PPM)
 
 print("Period = " + str(T))
+print("Initial condition = " + str(sol))
 
-[x,t_space] = solve_to(PPM,sol,100,0.01,2)
+[x,t_space] = solve_to(PPM,sol,T,0.01,2)
 
 
 plt.plot(x[0],x[1])
@@ -70,3 +88,9 @@ plt.show()
 
 
 # %%
+
+
+
+def BVP(func, x0):
+    [x,t_space] = 
+ """
