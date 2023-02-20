@@ -35,7 +35,6 @@ def solve_to(func, x0, t, deltat_max=0.01, method='RK4'): # Method == 1: EULER, 
             x_new = euler_step(deltat_max,x_old,func)
             x_old = x_new
             counter += 1
-            print(counter)
 
         # final iteration where time-step =/= deltat_max:
 
@@ -62,14 +61,6 @@ def solve_to(func, x0, t, deltat_max=0.01, method='RK4'): # Method == 1: EULER, 
 
     return result(x, np.hstack((t_space, t)))
 
-
-#%%
-
-t = 1.003
-result = solve_to(f,[1],1)
-x = result.x
-t_space = result.t_space
-
   
 def error_func(deltat_min,deltat_max):
 
@@ -89,13 +80,35 @@ def error_func(deltat_min,deltat_max):
 
     return [error,t_step_space]
 
+#%%
+
+t = 0.99
+deltat_max = 0.1
+
+
+def gen_t_space(t,deltat_max):
+
+    t_space = np.arange(0,t+deltat_max,deltat_max)
+    t_space[-1] = t
+
+    return t_space
+
+t_space_test = gen_t_space(t,deltat_max)
+
+result = solve_to(f,[1],t,deltat_max)
+
+x = result.x
+t_space = result.t_space
+
+plt.plot(t_space, x[0])
+print(t_space)
 
 # %% # Produce and plot all results
 
 [error, t_step_space] = error_func(10**-5,0.01)
 
-result_2d = solve_to(func = g, x0 = [1,0], t = 100, deltat_max = 0.01, method = 2) # Results for 2-D system in question 3
-result_1d = solve_to(func = f, x0 = [1], t = 1, deltat_max = 0.001, method = 2) # Results for first order system in question 1
+result_2d = solve_to(func = g, x0 = [1,0], t = 100, deltat_max = 0.01) # Results for 2-D system in question 3
+result_1d = solve_to(func = f, x0 = [1], t = 1, deltat_max = 0.001) # Results for first order system in question 1
 
 x_1d = result_1d.x
 t_space = result_1d.t_space
