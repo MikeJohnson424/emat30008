@@ -1,21 +1,10 @@
 #%%
 import numpy as np
 import matplotlib.pyplot as plt
+from ODEs import f,g
+
 
 #%%
-
-def VDP(x,t=0): # Define ODE: Van Der Pol Oscillator
-    x_dot0 = x[1]
-    x_dot1 = (1-x[0]**2)*x[1]-x[0]
-    return np.hstack((x_dot0,x_dot1))
-
-def f(x,t=0): # Define ODE: dxdt = x, solution: x(t) = x0*exp(x)
-    return(x)
-
-def g(x,t=0): # Define ODE: d2xdt2 = -x
-    x_dot0 = x[1]
-    x_dot1 = -x[0]
-    return np.hstack((x_dot0,x_dot1))
 
 
 def euler_step(deltat_max,x_n, f): # define function to compute a single euler step
@@ -30,23 +19,28 @@ def RK_step(h,x,t,func): # h: time_step, x = current solution, t = current time,
     x_n1 = x + (h/6)*(k1+2*k2+2*k3+k4)
     return x_n1
 
-def solve_to(func, x0, t, deltat_max=0.01, method=2): # Method == 1: EULER, method == 2: RUNGE-KUTTA
+def solve_to(func, x0, t, deltat_max=0.01, method='RK4'): # Method == 1: EULER, method == 2: RUNGE-KUTTA
 
     counter = 0
     x_old = np.array(x0)
-    t_space = np.hstack((np.arange(0,t,deltat_max),t))
+    t_space = np.arange(0,t+deltat_max,deltat_max)
+    t_space[-1] = t
 
-    x = np.zeros([len(x_old),len(t_space)])
+    x = np.zeros([len(x_old),len(t_space)+1])
 
-    if method == 1:  
-    # Perform integration of ODE function using EULER METHOD in range t
+    if method == 'forward_euler':  # Perform integration of ODE function using EULER METHOD in range t
 
         for i in t_space:
             x[:,counter] = x_old
             x_new = euler_step(deltat_max,x_old,func)
             x_old = x_new
             counter += 1
-    
+            print(counter)
+
+        # final iteration where time-step =/= deltat_max:
+
+        delta_t = t - t_space[-1]
+        x[:,counter] = euler_step(delta_t, x_old, func)    
 
     else: # Perform integration of ODE function using RUNGE-KUTTA method in range t
             
@@ -56,12 +50,26 @@ def solve_to(func, x0, t, deltat_max=0.01, method=2): # Method == 1: EULER, meth
             x_old = x_new
             counter += 1
 
+        # final iteration where time-step =/= deltat_max:
+
+        delta_t = t - t_space[-1]
+        x[:,counter] = RK_step(delta_t, x_old, t,func)
+
     class result:
         def __init__(self,x,t_space):
             self.x = x
             self.t_space = t_space
 
-    return result(x, t_space)
+    return result(x, np.hstack((t_space, t)))
+
+
+#%%
+
+t = 1.003
+result = solve_to(f,[1],1)
+x = result.x
+t_space = result.t_space
+
   
 def error_func(deltat_min,deltat_max):
 
@@ -86,8 +94,8 @@ def error_func(deltat_min,deltat_max):
 
 [error, t_step_space] = error_func(10**-5,0.01)
 
-result_2d = solve_to(func = g, x0 = [1,0], t = 100, deltat_max = 0.01, method = 1) # Results for 2-D system in question 3
-result_1d = solve_to(func = f, x0 = [1], t = 1, deltat_max = 0.01, method = 1) # Results for first order system in question 1
+result_2d = solve_to(func = g, x0 = [1,0], t = 100, deltat_max = 0.01, method = 2) # Results for 2-D system in question 3
+result_1d = solve_to(func = f, x0 = [1], t = 1, deltat_max = 0.001, method = 2) # Results for first order system in question 1
 
 x_1d = result_1d.x
 t_space = result_1d.t_space
@@ -96,8 +104,8 @@ x_2d = result_2d.x
 t_space_2d = result_2d.t_space
 
 #%%
-""" 
-fig, axs = plt.subplots(2, 2)
+
+""" fig, axs = plt.subplots(2, 2)
 axs[0, 0].plot(t_space,x_1d[0])
 axs[0, 0].set_title('Solution x(t) = e^t')
 axs[0, 0].set(xlabel='t', ylabel='e^t')
@@ -120,7 +128,7 @@ axs[1, 1].set_title('Solution for question 3')
 
 # Hide x labels and tick labels for top plots and y ticks for right plots.
 for ax in axs.flat:
-    ax.label_outer()
+    ax.label_outer() """
 
- """
+
 # %%
