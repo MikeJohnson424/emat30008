@@ -6,7 +6,6 @@ from ODEs import f,g
 
 #%%
 
-
 def euler_step(deltat_max,x_n, f): # define function to compute a single euler step
     x_n1 = x_n + deltat_max*f(x_n)
     return x_n1
@@ -26,24 +25,24 @@ def solve_to(func, x0, t, deltat_max=0.01, method='RK4'): # Method == 1: EULER, 
     t_space = np.arange(0,t+deltat_max,deltat_max)
     t_space[-1] = t
 
-    x = np.zeros([len(x_old),len(t_space)+1])
+    x = np.zeros([len(x_old),len(t_space)])
 
     if method == 'forward_euler':  # Perform integration of ODE function using EULER METHOD in range t
 
-        for i in t_space:
+        for i in t_space[0:-1]:
             x[:,counter] = x_old
-            x_new = euler_step(deltat_max,x_old,func)
+            x_new = euler_step(deltat_max,x_old,f)
             x_old = x_new
             counter += 1
 
         # final iteration where time-step =/= deltat_max:
 
-        delta_t = t - t_space[-1]
-        x[:,counter] = euler_step(delta_t, x_old, func)    
+        deltat_final = t - t_space[-2]
+        x[:,counter] = euler_step(deltat_final, x[:,-2], f)   
 
     else: # Perform integration of ODE function using RUNGE-KUTTA method in range t
             
-        for i in t_space:
+        for i in t_space[0:-1]:
             x[:,counter] = x_old
             x_new = RK_step(deltat_max, x_old, i,func)
             x_old = x_new
@@ -51,15 +50,15 @@ def solve_to(func, x0, t, deltat_max=0.01, method='RK4'): # Method == 1: EULER, 
 
         # final iteration where time-step =/= deltat_max:
 
-        delta_t = t - t_space[-1]
-        x[:,counter] = RK_step(delta_t, x_old, t,func)
+        delta_t = t - t_space[-2]
+        x[:,counter] = RK_step(delta_t, x[:,-2], t,func)
 
     class result:
         def __init__(self,x,t_space):
             self.x = x
             self.t_space = t_space
 
-    return result(x, np.hstack((t_space, t)))
+    return result(x, t_space)
 
   
 def error_func(deltat_min,deltat_max):
@@ -82,8 +81,8 @@ def error_func(deltat_min,deltat_max):
 
 #%%
 
-t = 0.99
-deltat_max = 0.1
+t = 1.01
+deltat_max = 0.01
 
 
 def gen_t_space(t,deltat_max):
@@ -95,13 +94,14 @@ def gen_t_space(t,deltat_max):
 
 t_space_test = gen_t_space(t,deltat_max)
 
-result = solve_to(f,[1],t,deltat_max)
+result = solve_to(f,[1],t,deltat_max, method='runge')
 
 x = result.x
 t_space = result.t_space
 
 plt.plot(t_space, x[0])
 print(t_space)
+print(len(t_space))
 
 # %% # Produce and plot all results
 
