@@ -64,8 +64,6 @@ plt.plot(x_true[0],x_true[1])
 
 # TEST FOR HOPF
 
-
-
 def hopf_normal_form_scipy(t,x, beta=1,sigma=-1): # Define hopf normal form
 
     x1,x2 = x
@@ -76,7 +74,7 @@ def hopf_normal_form_scipy(t,x, beta=1,sigma=-1): # Define hopf normal form
 
 x0 = [10,10]
 
-result = solve_to(hopf_normal_form, x0,10,0.01,'forward_euler')
+result = solve_to(hopf_normal_form, x0,10,0.001,'forward_euler')
 result_true = solve_ivp(hopf_normal_form_scipy, [0,10], x0)
 
 x_true = result_true.y
@@ -85,7 +83,7 @@ t = result.t_space
 
 
 plt.plot(x[0],x[1])
-plt.plot(x_true[0],x_true[1])
+#plt.plot(x_true[0],x_true[1])
 #plt.plot(t,x[0])
 
 
