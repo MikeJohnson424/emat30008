@@ -88,7 +88,7 @@ axs[1, 1].set_title('Solution for question 3')
 
 # Hide x labels and tick labels for top plots and y ticks for right plots.
 for ax in axs.flat:
-    ax.label_outer() """
-
+    ax.label_outer()
+ """
 
 # %%

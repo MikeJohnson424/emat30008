@@ -2,10 +2,48 @@ import numpy as np
 
 
 def euler_step(deltat_max,x_n, f): # define function to compute a single euler step
+
+    """
+    A function that uses the forward euler method to integrate over a single time-step
+
+    Parameters
+    ----------
+    deltat_max : Float
+        The time-step being iterated over
+    x_n : Python list
+        Conditions of ODE system at current time level.
+    f : function
+        ODE system being integrated.
+
+    Returns
+    -------
+    Returns a python list defining the solution at the next time-level.
+    """
+
     x_n1 = x_n + deltat_max*f(x_n)
     return x_n1
 
 def RK_step(h,x,t,func): # h: time_step, x = current solution, t = current time, f = ODE function
+
+    """
+    A function that uses the runge-kutta 4 integration method over a single time-step.
+
+    Parameters
+    ----------
+    h : float
+        Size of time-step
+    x : Python list
+        Current conditions of system.
+    t : Float
+        Current time level.
+    func : function
+        ODE system to integrate.
+
+    Returns
+    -------
+    Returns a numpy array that defines the solution at the next time-step.
+    """
+
     k1 = func(x,t)
     k2 = func(x+h*k1/2, t+h/2)
     k3 = func(x + h*k2/2, t+ h/2)
@@ -14,6 +52,30 @@ def RK_step(h,x,t,func): # h: time_step, x = current solution, t = current time,
     return x_n1
 
 def solve_to(func, x0, t, deltat_max=0.01, method='RK4'): # Method == 1: EULER, method == 2: RUNGE-KUTTA
+
+    """
+    A function that iterates over an time-range using a chosen integration method to solve for the solution of a 
+    given ODE.
+
+    Parameters
+    ----------
+    func : function
+        The ODE to solve to time t from time = 0.
+    x0 : Python List
+        Initial conditions for ODE system
+    t : Float
+        Time to integrate up until from t = 0
+    deltat_max : Float
+        Defines the maximum time step to be used in the integration
+    method : String
+        Choose from 'forward euler' or 'RK4' to define which solver is used
+
+    Returns
+    -------
+    Returns a python class with attributes t_space : a list of intermediate time steps for which ODE is solved at, and x : 
+    a numpy array containing solution across time to ODE system given x0.
+    """
+
 
     counter = 0
     x_old = np.array(x0)
