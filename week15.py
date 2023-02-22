@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
 from scipy.integrate import solve_ivp
 from ODEs import PPM
-from limit_cyle import isolate_lim_cycle
+from limit_cycle import isolate_lim_cycle
 
 #%% 
 
