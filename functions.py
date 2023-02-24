@@ -1,4 +1,3 @@
-#%%
 
 import numpy as np
 
@@ -39,7 +38,7 @@ def hopf_normal_form_sol(t, beta=1, theta=0): # Define solution to hopf normal f
 
     return np.array([x1,x2])
 
-def third_order_hopf(x, beta=1,sigma=1): # Define a third order hopf normal form ODE
+def third_order_hopf(x, t=0, beta=1,sigma=1): # Define a third order hopf normal form ODE
 
     x1,x2,x3 = x
     dx1_dt = beta*x1-x2+sigma*x1*(x1**2+x2**2)
@@ -47,7 +46,19 @@ def third_order_hopf(x, beta=1,sigma=1): # Define a third order hopf normal form
     dx3_dt = -x3
 
     return np.array([dx1_dt,dx2_dt,dx3_dt])
-#%%
+
+def modified_hopf(x,t=0,beta=1):
+
+    x1,x2 = x
+    dx1_dt = beta*x1 - x2 + x1*(x1**2 + x2**2) - x1*(x1**2 + x2**2)
+    dx2_dt = x1 + beta*x2 + x2*(x1**2 + x2**2) - x2*(x1**2 + x2**2)
+
+    return np.array([dx1_dt, dx2_dt])
+
+def h(x,c):
+    return x**3-x+c
+
+
 
 
 

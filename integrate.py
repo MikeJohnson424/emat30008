@@ -1,7 +1,7 @@
 #%%
 
 import numpy as np
-from ODEs import g
+from functions import g
 
 
 def euler_step(deltat_max,x, func,t=0): # define function to compute a single euler step
@@ -54,7 +54,7 @@ def RK4_step(deltat_max,x,func,t=0):
     x_n1 = x + (deltat_max/6)*(k1+2*k2+2*k3+k4)
     return x_n1
 
-def solve_to(func, x0, t, deltat_max=0.01, stepper = RK4_step):
+def solve_to(func, x0, t, deltat_max=0.01, method = 'RK4'):
 
     """
     A function that iterates over an time-range using a chosen integration method to solve for the solution of a 
@@ -70,14 +70,19 @@ def solve_to(func, x0, t, deltat_max=0.01, stepper = RK4_step):
         Time to integrate up until from t = 0
     deltat_max : Float
         Defines the maximum time step to be used in the integration
-    stepper : Function
-        Choose from euler_step or RK4_step to define which solver is used
+    method : String
+        Choose from 'forward_euler' or 'RK4' to define which solver is used
 
     Returns
     -------
     Returns a python class with attributes t_space : a list of intermediate time steps for which ODE is solved at, and x : 
     a numpy array containing solution across time to ODE system given x0.
     """
+
+    if method == 'forward_euler':
+        stepper = euler_step
+    elif method =='RK4':
+        stepper = RK4_step
 
     counter = 0
     x_old = np.array(x0)
@@ -110,5 +115,5 @@ def solve_to(func, x0, t, deltat_max=0.01, stepper = RK4_step):
 def f(x,t=0): # Define ODE: dxdt = x, solution: x(t) = x0*exp(x)
     return(x)
 
-result = solve_to(func = f,x0 = [1],t = 10, deltat_max = 0.1, stepper = RK4_step)
+result = solve_to(func = f,x0 = [1],t = 10, deltat_max = 0.1)
 # %%

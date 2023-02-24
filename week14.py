@@ -1,13 +1,14 @@
 #%%
 import numpy as np
 import matplotlib.pyplot as plt
-from ODEs import f,g
+from functions import f,g
 from integrate import solve_to
 
 
 #%%
 
-  
+ # NEED TO REDO ERROR FUNC 
+
 def error_func(deltat_min,deltat_max):
 
     x_true  = np.exp(1)
@@ -41,7 +42,7 @@ def gen_t_space(t,deltat_max):
 
 t_space_test = gen_t_space(t,deltat_max)
 
-result = solve_to(f,[1],t,deltat_max, method='runge')
+result = solve_to(f,[1],t,deltat_max)
 
 x = result.x
 t_space = result.t_space
