@@ -24,7 +24,7 @@ def PPM(x,t=0,a=1,b=0.2,d=0.1): # Define predator-prey model
     dy_dt = b*y*(1-y/x)
     return np.array([dx_dt,dy_dt])
 
-def hopf_normal_form(x, beta=1,sigma=-1): # Define hopf normal form
+def hopf_normal_form(x, t=0, beta=1,sigma=-1): # Define hopf normal form
 
     x1,x2 = x
     dx1_dt = beta*x1-x2+sigma*x1*(x1**2+x2**2)
@@ -35,7 +35,7 @@ def hopf_normal_form(x, beta=1,sigma=-1): # Define hopf normal form
 def hopf_normal_form_sol(t, beta=1, theta=0): # Define solution to hopf normal form
 
     x1 = np.sqrt(beta)*np.cos(t+theta)
-    x2 = np.sqrt(beta)*np.cos
+    x2 = np.sqrt(beta)*np.cos(t+theta)
 
     return np.array([x1,x2])
 

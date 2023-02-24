@@ -7,9 +7,20 @@ import numpy as np
 
 def lim_cycle_problem(func,init):
 
+    x0 = init[0:-1]
+    T = init[-1]
+    sol = solve_to(func,x0,T).x[:,-1]
+    phase_con = func(x0)[0]
+    phase_con1 = x0[0] - 0.4
+
+    return np.hstack((x0-sol,phase_con))
+
+
+def isolate_lim_cycle(func, init):
+
     """
-    A function to be used as part of isolate_lim_cycle. Outputs various conditions that must be true for 
-    a limit cycle to be present.
+    A function to be used to isolate a limit cycle by finding suitable initial conditions
+    and its period
 
     Parameters
     ----------
@@ -28,17 +39,6 @@ def lim_cycle_problem(func,init):
     returned array is empty.
     """
 
-    x0 = init[0:-1]
-    T = init[-1]
-    sol = solve_to(func,x0,T).x[:,-1]
-    phase_con = func(x0)[0]
-    phase_con1 = x0[0] - 0.4
-
-    return np.hstack((x0-sol,phase_con))
-
-
-def isolate_lim_cycle(func, init):
-
     ans = fsolve(lambda x: lim_cycle_problem(func, x),init)
 
     x0 = ans[0:-1]
@@ -52,4 +52,5 @@ def isolate_lim_cycle(func, init):
     return ans(period,x0)
 
 # %%
+
 
