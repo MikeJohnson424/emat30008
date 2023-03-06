@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
 from scipy.integrate import solve_ivp
 from functions import PPM
-from limit_cycle import isolate_lim_cycle
+from shooting import isolate_lim_cycle
 
 #%% 
 
