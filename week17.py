@@ -6,38 +6,37 @@ from integrate import solve_to
 from shooting import isolate_lim_cycle
 from scipy.optimize import fsolve
 
+def h(x,alpha):
+    return x**3-x-alpha
 
 
 #%%
 
-def h(x,alpha):
-    return x**3-x+alpha
-
-
-def NP_continuation(func,x0=[1], alpha0=-5,step_size = 0.01, imax = 1000):
+def NP_continuation(func,x0=[-5],alpha0=-10,imax=1000,step_size = 0.01):
 
     counter = 0
 
-    x = np.zeros((len(x0),imax+1))
+    x_new = x0
 
-    alpha = np.arange(alpha0, alpha0+imax*step_size+step_size, step_size)
+    x = np.zeros((len(x0),imax))
+    alpha = np.zeros(imax)
 
-    x0 = x0[0]
+    alpha_new = alpha0
 
-    sol_old = x0
+    for i in range(imax):
 
-    for i in range(imax+1):
+        alpha[counter] = alpha_new
+
+        x_old = x_new
+        alpha_old = alpha_new
+
+        x_new = fsolve(lambda x: func(x,alpha_new),x_old)
+        alpha_new = alpha_old + step_size
+
+        x[:,counter] = x_new
         
-        alpha_current = alpha[counter]
-
-        sol_current = fsolve(lambda x: func(x,alpha_current), sol_old)
-
-        x[:,counter] = sol_current
 
         counter += 1
-
-        sol_old = sol_current
-
         
 
     return [x, alpha]
@@ -52,28 +51,61 @@ plt.show()
 
 # %%
 
+def g(func, u, u_pred, delta_u):
+    
+    x,alpha = u
 
-def PA_continuation(func,x0,alpha0): 
+    top = func(x,alpha)
 
-    # Linear Predictor: 
+    bottom = np.dot((u - u_pred),delta_u)
 
-    u_old = np.hstack((alpha_old, alpha_current))
-    u_current = np.hstack((alpha_current, x_current))
 
-    delta_u = u_current - u_old
+    return np.array([top,bottom])
 
-    u_future = u_current + delta_u
+def PA_continuation(func,x0=1,alpha0=-5,imax=100, initial_step_size = 0.1): 
 
-    # Corrector 
+    u = np.zeros((2,imax+1))
 
-    def g(func,u):   
+    alpha0 = alpha0
+    x0 = fsolve(lambda x: func(x,alpha0),x0)
+    u_old = np.hstack((x0,alpha0))
 
-        alpha,x = u
-        u = np.array(u)
-        dp = np.dot((u-u_future),delta_u)
+    u[:,0] = u_old
 
-        return np.hstack((func(x,alpha),x0))
+    alpha1 = alpha0 + initial_step_size
+    x1 = fsolve(lambda x: func(x,alpha1),x0)
+    u_current = np.hstack((x1,alpha1))
 
-    fsolve(lambda u: g(h,u),x0)
+    counter = 1
+    
+
+    for i in range (imax):
+
+        u[:,counter] = u_current
+        
+        # Linear Predictor: 
+
+        delta_u = u_current - u_old
+        u_pred = u_current + delta_u
+
+        # Corrector:
+
+        u_true = fsolve(lambda u: g(func,u, u_pred, delta_u),u_current)
+
+        # Update Values
+
+        u_old = u_current
+        u_current = u_true
+        
+        counter +=1
+
+
+    return u
+
+
+
+u = PA_continuation(h)
+
+plt.plot(u[1,:],u[0,:])
 
 # %%
