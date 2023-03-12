@@ -55,8 +55,7 @@ def modified_hopf(x, t=None, beta=1):
 
     return np.array([dx1_dt, dx2_dt])
 
-def h(x,c=0):
-    return x**3-x+c
+
 
 
 

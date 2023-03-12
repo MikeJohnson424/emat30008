@@ -26,7 +26,7 @@ def euler_step(deltat_max,x, func,t=0): # define function to compute a single eu
     x_n1 = x + deltat_max*func(x)
     return x_n1
 
-def RK4_step(deltat_max,x,func,t=0):
+def RK4_step(deltat_max,x,func,t=None):
 
     """
     A function that uses the runge-kutta 4 integration method over a single time-step.
@@ -87,11 +87,12 @@ def solve_to(func, x0, t, deltat_max=0.01, method = 'RK4'):
     counter = 0
     x_old = np.array(x0)
     t_space = np.arange(0,t+deltat_max,deltat_max)
-    t_space[-1] = t
+    t_space[-1] = t # Ensure that t_space always includes limits of t defined by user
 
     x = np.zeros([len(x_old),len(t_space)])
       
     for i in t_space[0:-1]:
+
         x[:,counter] = x_old
         x_new = stepper(deltat_max, x_old,func, i)
         x_old = x_new

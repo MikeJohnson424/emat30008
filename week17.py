@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from integrate import solve_to
 from shooting import isolate_lim_cycle
 from scipy.optimize import fsolve
+from functions import PPM
 
 def h(x,alpha):
     return x**3-x-alpha
@@ -104,8 +105,63 @@ def PA_continuation(func,x0=1,alpha0=-5,imax=100, initial_step_size = 0.1):
 
 
 
-u = PA_continuation(h)
+u_h = PA_continuation(h)
 
 plt.plot(u[1,:],u[0,:])
 
+# %%
+
+def g(func, u, u_pred, delta_u):
+    
+    x,alpha = u
+
+    top = func(x,alpha)
+    bottom = np.dot((u - u_pred),delta_u)
+
+
+    return np.array([top,bottom])
+
+def PA_continuation(func,x0=[1,2],alpha0=[-5],par = 0, imax=100, initial_step_size = 0.1): 
+
+    u = np.zeros((len(x0)+len(alpha0),imax+1))
+
+    alpha0 = alpha0[0]
+    x0 = isolate_lim_cycle(func, [0.5,0.38,21]).x0
+    u_old = np.hstack((x0,alpha0))
+
+    u[:,0] = u_old
+
+    alpha1 = alpha0 + initial_step_size
+    x1 = isolate_lim_cycle(func, [0.5,0.38,21]).x0
+    u_current = np.hstack((x1,alpha1))
+
+    counter = 1
+    
+
+    for i in range (imax):
+
+        u[:,counter] = u_current
+        
+        # Linear Predictor: 
+
+        delta_u = u_current - u_old
+        u_pred = u_current + delta_u
+
+        # Corrector:
+
+        u_true = fsolve(lambda u: g(func,u, u_pred, delta_u),u_current)
+
+        # Update Values
+
+        u_old = u_current
+        u_current = u_true
+        
+        counter +=1
+
+
+    return u
+
+u = PA_continuation(PPM)
+
+plt.plot(u[1,:],u[0,:])
 # %%
