@@ -12,7 +12,7 @@ def f_diff_solver(x_span,alpha,beta,N):
    
     a,b, = x_span
     delta_x = (b-a)/N
-    x = np.arange(a,b+delta_x, delta_x)
+    x = np.linspace(a,b,N+1)
     u_mid = np.zeros(N-1)
 
     RHS = u_mid
@@ -45,8 +45,7 @@ def f_diff_solver(x_span,alpha,beta,N):
 
 #%%
 
-x_span = [0,10]; alpha = 2; beta = 3; N = 10; a,b = x_span
-
+x_span = [0,97]; alpha = 2; beta = 3; N = 11; a,b = x_span
 result = f_diff_solver(x_span,alpha,beta,N)
 u = result.u
 x = result.x
