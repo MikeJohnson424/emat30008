@@ -8,31 +8,31 @@ from scipy.optimize import fsolve
 
  # %%
 
-
-
 def f_diff_solver(x_span,alpha,beta,N):
    
     a,b, = x_span
     delta_x = (b-a)/N
     x = np.arange(a,b+delta_x, delta_x)
-    u = np.zeros(N-1)
+    u_mid = np.zeros(N-1)
 
-    def F(u):
+    RHS = u_mid
 
-        u[0] = (u[1]-2*u[0]+alpha)/(delta_x**2)
+    def FDA(u_mid):
 
-        for i in range(1,N-3):
+        RHS[0] = (u_mid[1]-2*u_mid[0]+alpha)/(delta_x**2)
 
-            u[i] = (u[i+1]-2*u[i]+u[i-1])/(delta_x**2) 
+        for i in range(1,N-2):
 
-        u[-1] = (beta-2*u[-1]+u[-2])/(delta_x**2)
+            RHS[i] = (u_mid[i+1]-2*u_mid[i]+u_mid[i-1])/(delta_x**2) 
 
-        return u
+        RHS[-1] = (beta-2*u_mid[-1]+u_mid[-2])/(delta_x**2)
 
-    u_middle = fsolve(F,u)
+        return RHS 
+
+    u_mid = fsolve(FDA,u_mid)
 
 
-    u = np.hstack((alpha,u_middle,beta))
+    u = np.hstack((alpha,u_mid,beta))
 
     class result:
         def __init__(self,u,x):
@@ -41,11 +41,11 @@ def f_diff_solver(x_span,alpha,beta,N):
 
     return result(u,x)
 
-x_span = [0,10]
-alpha = 2
-beta = 3
-N = 10
-a,b = x_span
+
+
+#%%
+
+x_span = [0,10]; alpha = 2; beta = 3; N = 10; a,b = x_span
 
 result = f_diff_solver(x_span,alpha,beta,N)
 u = result.u
