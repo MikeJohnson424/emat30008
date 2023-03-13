@@ -1,111 +1,89 @@
-
 #%%
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import fsolve,root
+from scipy.sparse import diags
+from math import floor
 
-def q(x,u,*args):
-    mu = args
-    return np.exp(mu*u)
+#%%
 
- # %%
+def q(x,u):
 
+    return 1
 
-def f_diff_solver(x_span,alpha,beta,N):
-   
-    D = 1
-    a,b, = x_span
-    delta_x = (b-a)/N
+def gen_diag_mat(N,entries):
+
+    """
+    A function that uses scipy.sparse.diags to generated a diagonal matrix
+
+    Parameters
+    ----------
+    N : Integer
+        Size of matrix is NxN
+    entries : Python list
+        Entries to be placed on the diagonals of the matrix.
+
+    Returns
+    -------
+    Returns a numpy matrix of size NxN with the entries placed on the diagonals.
+    """
+
+    length = len(entries) # Number of diagonals
+    lim = floor(length/2) 
+    diagonals = range(-lim,lim+1) # Which diagonals to put the entries in
+
+    k = [[] for _ in range(length)] # Create a list of empty lists
+    for i in range(length):
+        k[i] = entries[i]*np.ones(N - abs(diagonals[i])) # Fill the lists with the entries
+    mat = diags(k,diagonals).toarray() # Create the N-diagonal matrix
+
+    return mat
+
+#%%
+
+def f_diff_solver(x_span,b_cond,N,b_cond_type='double-dirichlet'):
+    
+    alpha, beta = b_cond # Unpack boundary conditions
+    a,b, = x_span # Unpack limits of x
+    delta_x = (b-a)/N 
     x = np.linspace(a,b,N+1)
-    u_mid = np.zeros(N-1)
 
-    RHS = u_mid
+    if b_cond_type == 'double-dirichlet':
 
-    def FDA(u_mid):
+        # alpha, beta = u(a), u(b) respectively
 
-        RHS[0] = D*(u_mid[1]-2*u_mid[0]+alpha)/(delta_x**2) + q(x[1],u_mid[0])
+        A_DD = gen_diag_mat(N-1,[1,-2,1])
+        b_DD = np.hstack((alpha,np.zeros(N-3),beta))+delta_x**2*q(x[1:-1],None)
+        
+        u_sol = np.linalg.solve(A_DD,-b_DD)
+        u_full = np.hstack((alpha,u_sol,beta))
 
-        for i in range(1,N-2):
+    elif b_cond_type == 'dirichlet-neumann':
 
-            RHS[i] = D*(u_mid[i+1]-2*u_mid[i]+u_mid[i-1])/(delta_x**2) + q(x[i+1],u_mid[i])
+        # alpha, beta = u(a), u'(b) respectively
 
-        RHS[-1] = D*(beta-2*u_mid[-1]+u_mid[-2])/(delta_x**2) + q(x[-2],u_mid[-1])
+        A_DN = gen_diag_mat(N,[1,-2,1])
+        A_DN[-1,-2] = 2
+        b_DN = np.hstack((alpha,np.zeros(N-2),2*beta*delta_x))+delta_x**2*q(x[1:],None)
+        
+        u_sol = np.linalg.solve(A_DN,-b_DN)
+        u_full = np.hstack((alpha,u_sol))
 
-        return RHS 
 
-    u_mid = fsolve(FDA,u_mid)
-
-
-    u = np.hstack((alpha,u_mid,beta))
 
     class result:
         def __init__(self,u,x):
             self.u = u
             self.x = x
 
-    return result(u,x)
 
-# %%
+    return result(u_full,x)
 
-def f_diff_solver(x_span,b_cond,N,b_con_type):
+#%%
 
-    D = 1
-    a,b, = x_span
-    delta_x = (b-a)/N
-    x = np.linspace(a,b,N+1)
-    u = np.zeros(N+1) 
+x_span = [0,10]; b_cond = [0,5]; N = 10; a,b = x_span; alpha,beta = b_cond; delta_x = (b-a)/N;
 
-    if b_con_type == 'dirichlet': # Double Dirichlet boundary conditions
-
-        alpha,beta = b_cond
-
-        u[0] = alpha
-        u[-1] = beta      
-        u_mid = u[1:-1]
-
-        def FDA(u_mid):
-
-            RHS = D*(np.hstack((u_mid[1:],u[-1])) - 2*u_mid + np.hstack((u[0],u_mid[:-1])))/delta_x**2 + q(x,u_mid,2)
-
-            return RHS
-
-
-        u_mid = fsolve(FDA,u_mid)
-        u = np.hstack((alpha,u_mid,beta))
-
-    elif b_con_type == 'neumann': # Neumann boundary conditions
-        
-        
-        u_mid = u[1:]
-        alpha,delta = b_cond
-        u[0] = alpha
-
-        def FDA(u_mid):
-
-            RHS1 = (u_mid[1:] - 2*u_mid[:-1] + np.hstack((alpha,u_mid[:-2])))/delta_x**2 + q(x,u_mid,2)
-            RHS2 = (-2*u_mid[-1]+2*u_mid[-2])/delta_x**2 + 2*delta/delta_x + q(x,u_mid,2)
-
-            return np.hstack((RHS1,RHS2))
-        
-        u_mid = fsolve(FDA,u_mid)
-        u = np.hstack((alpha,u_mid))   
-
-    else: # Robin boundary conditions
-        pass
-
-    class result:
-        def __init__(self,u,x):
-            self.u = u
-            self.x = x
-
-    return result(u,x)
-
-# %%
-
-x_span = [0,10]; b_cond = [2,3]; N = 10; a,b = x_span; alpha,beta = b_cond; delta_x = (b-a)/N;
-
-result = f_diff_solver(x_span,b_cond,N,'neumann')
+result = f_diff_solver(x_span,b_cond,N,b_cond_type='double-dirichlet')
 u = result.u
 x = result.x
 
@@ -122,6 +100,10 @@ u_true = sol_source_1(x,a,b,alpha,beta)
 
 plt.plot(x,u)
 #plt.plot(x,u_true)
+
+
+
+
 
 
 # %%
