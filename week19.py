@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 from scipy.optimize import fsolve,root
 
 def q(x,u,*args):
-
-    return 1
+    mu = args
+    return np.exp(mu*u)
 
  # %%
 
@@ -48,14 +48,13 @@ def f_diff_solver(x_span,alpha,beta,N):
 
 # %%
 
-def f_diff_solver(x_span,b_cond,N, b_con_type):
+def f_diff_solver(x_span,b_cond,N,b_con_type):
 
     D = 1
     a,b, = x_span
     delta_x = (b-a)/N
     x = np.linspace(a,b,N+1)
-    u = np.zeros(N+1)
-    
+    u = np.zeros(N+1) 
 
     if b_con_type == 'dirichlet': # Double Dirichlet boundary conditions
 
@@ -76,18 +75,20 @@ def f_diff_solver(x_span,b_cond,N, b_con_type):
         u = np.hstack((alpha,u_mid,beta))
 
     elif b_con_type == 'neumann': # Neumann boundary conditions
+        
+        
         u_mid = u[1:]
         alpha,delta = b_cond
+        u[0] = alpha
 
         def FDA(u_mid):
 
             RHS1 = (u_mid[1:] - 2*u_mid[:-1] + np.hstack((alpha,u_mid[:-2])))/delta_x**2 + q(x,u_mid,2)
-            RHS2 = (2*u_mid[-1]+2*u_mid[-2])/delta_x**2 + 2*delta/delta_x + q(x,u_mid,2)
+            RHS2 = (-2*u_mid[-1]+2*u_mid[-2])/delta_x**2 + 2*delta/delta_x + q(x,u_mid,2)
 
             return np.hstack((RHS1,RHS2))
         
         u_mid = fsolve(FDA,u_mid)
-
         u = np.hstack((alpha,u_mid))   
 
     else: # Robin boundary conditions
@@ -102,9 +103,9 @@ def f_diff_solver(x_span,b_cond,N, b_con_type):
 
 # %%
 
-x_span = [0,10]; b_cond = [2,3]; N = 100; a,b = x_span; alpha,beta = b_cond; delta_x = (b-a)/N;
+x_span = [0,10]; b_cond = [2,3]; N = 10; a,b = x_span; alpha,beta = b_cond; delta_x = (b-a)/N;
 
-result = f_diff_solver(x_span,b_cond,N,'dirichlet')
+result = f_diff_solver(x_span,b_cond,N,'neumann')
 u = result.u
 x = result.x
 
@@ -120,7 +121,7 @@ u_true = sol_source_1(x,a,b,alpha,beta)
 #u_true = sol_no_source(x,a,b,alpha,beta)
 
 plt.plot(x,u)
-plt.plot(x,u_true)
+#plt.plot(x,u_true)
 
 
 # %%
