@@ -29,7 +29,7 @@ def gen_diag_mat(N,entries):
     """
 
     length = len(entries) # Number of diagonals
-    lim = floor(length/2) 
+    lim = floor(length/2) # +/- limits of diagonals
     diagonals = range(-lim,lim+1) # Which diagonals to put the entries in
 
     k = [[] for _ in range(length)] # Create a list of empty lists
@@ -42,7 +42,7 @@ def gen_diag_mat(N,entries):
 #%%
 
 def f_diff_solver(x_span,b_cond,N,b_cond_type='double-dirichlet'):
-    
+
     alpha, beta = b_cond # Unpack boundary conditions
     a,b, = x_span # Unpack limits of x
     delta_x = (b-a)/N 
@@ -69,7 +69,16 @@ def f_diff_solver(x_span,b_cond,N,b_cond_type='double-dirichlet'):
         u_sol = np.linalg.solve(A_DN,-b_DN)
         u_full = np.hstack((alpha,u_sol))
 
+    elif b_cond_type == 'dirichlet-robin':
 
+        # alpha, beta = u(a), u'(b) respectively
+
+        A_DR = gen_diag_mat(N,[1,-2,1])
+        A_DR[-1,-2] = 2
+        b_DR = np.hstack((alpha,np.zeros(N-2),2*beta*delta_x))+delta_x**2*q(x[1:],None)
+        
+        u_sol = np.linalg.solve(A_DR,-b_DR)
+        u_full = np.hstack((alpha,u_sol))
 
     class result:
         def __init__(self,u,x):

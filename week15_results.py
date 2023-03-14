@@ -11,7 +11,7 @@ from shooting import isolate_lim_cycle
 #%% 
 
 
-ans = isolate_lim_cycle(PPM, [0.5 , 0.3 , 21])
+ans = isolate_lim_cycle(PPM, [0.5 , 0.3 , 20])
 
 print(ans)
 x0 = ans.x0
