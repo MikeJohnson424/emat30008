@@ -85,6 +85,10 @@ def solve_to(func, x0, t, parameters, deltat_max=0.01, method = 'RK4'):
     elif method =='RK4':
         stepper = RK4_step
 
+    if t <= 0:
+
+        raise ValueError("Time cannot be negative!") # Check for negative input in time and throw error
+
     counter = 0
     x_old = np.array(x0)
     t_space = np.arange(0,t+deltat_max,deltat_max)
