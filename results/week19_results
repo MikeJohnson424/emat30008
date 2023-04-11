@@ -1,0 +1,29 @@
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.sparse import diags
+from math import floor
+from week19 import f_diff_solver
+
+
+x_span = [0,10]; b_cond = [0,5]; N = 10; a,b = x_span; alpha,beta = b_cond; dx = (b-a)/N;
+
+result = f_diff_solver(x_span,b_cond,N,b_cond_type='double-dirichlet')
+u = result.u
+x = result.x
+
+def sol_no_source(x,a,b,alpha,beta):
+
+    return ((beta-alpha))/(b-a)*(x-a)+alpha
+
+def sol_source_1(x,a,b,alpha,beta,D=1):
+
+    return -1/(2*D)*(x-a)*(x-b)+((beta-alpha))/(b-a)*(x-a)+alpha
+
+u_true = sol_source_1(x,a,b,alpha,beta)
+#u_true = sol_no_source(x,a,b,alpha,beta)
+
+plt.plot(x,u)
+#plt.plot(x,u_true)
+
+

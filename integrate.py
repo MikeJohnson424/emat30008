@@ -1,10 +1,11 @@
 #%%
 
 import numpy as np
-from functions import g
+from functions import PPM
+import matplotlib.pyplot as plt
 
 
-def euler_step(deltat_max,x, func,t=0): # define function to compute a single euler step
+def euler_step(deltat_max,x, func,parameters,t=None): # define function to compute a single euler step
 
     """
     A function that uses the forward euler method to integrate over a single time-step
@@ -26,7 +27,7 @@ def euler_step(deltat_max,x, func,t=0): # define function to compute a single eu
     x_n1 = x + deltat_max*func(x)
     return x_n1
 
-def RK4_step(deltat_max,x,func,t=None):
+def RK4_step(deltat_max,x,func,parameters,t=None):
 
     """
     A function that uses the runge-kutta 4 integration method over a single time-step.
@@ -45,19 +46,19 @@ def RK4_step(deltat_max,x,func,t=None):
     Returns
     -------
     Returns a numpy array that defines the solution at the next time-step.
-    """
+    """ 
 
-    k1 = func(x,t)
-    k2 = func(x+deltat_max*k1/2, t+deltat_max/2)
-    k3 = func(x + deltat_max*k2/2, t+ deltat_max/2)
-    k4 = func(x+deltat_max*k3, t+deltat_max)
+    k1 = func(x,t,parameters)
+    k2 = func(x+deltat_max*k1/2, t+deltat_max/2, parameters)
+    k3 = func(x + deltat_max*k2/2, t+ deltat_max/2, parameters)
+    k4 = func(x+deltat_max*k3, t+deltat_max, parameters)
     x_n1 = x + (deltat_max/6)*(k1+2*k2+2*k3+k4)
     return x_n1
 
-def solve_to(func, x0, t, deltat_max=0.01, method = 'RK4'):
+def solve_to(func, x0, t, parameters, deltat_max=0.01, method = 'RK4'):
 
     """
-    A function that iterates over an time-range using a chosen integration method to solve for the solution of a 
+    A function that iterates over a time-range using a chosen integration method to solve for the solution of a 
     given ODE.
 
     Parameters
@@ -94,14 +95,16 @@ def solve_to(func, x0, t, deltat_max=0.01, method = 'RK4'):
     for i in t_space[0:-1]:
 
         x[:,counter] = x_old
-        x_new = stepper(deltat_max, x_old,func, i)
+        x_new = stepper(deltat_max, x_old,func,parameters,i)
         x_old = x_new
         counter += 1
 
-    # final iteration where time-step =/= deltat_max:
+    # Complete final iteration where time-step =/= deltat_max:
 
     delta_t = t - t_space[-2]
-    x[:,counter] = stepper(delta_t, x[:,-2],func,t)
+    x[:,counter] = stepper(delta_t, x[:,-2],func,parameters,t)
+
+    # Define class to return result:
 
     class result:
         def __init__(self,x,t_space):
@@ -113,8 +116,12 @@ def solve_to(func, x0, t, deltat_max=0.01, method = 'RK4'):
 
 #%%
 
-def f(x,t=0): # Define ODE: dxdt = x, solution: x(t) = x0*exp(x)
-    return(x)
+from functions import f
 
-result = solve_to(func = f,x0 = [1],t = 10, deltat_max = 0.1)
+result = solve_to(func = f,x0 = [1],t = 1,parameters = [], deltat_max = 0.1)
+
+#plt.plot(result.t_space,result.x[0])
+
+#print('e ~ ' + str(result.x[0,-1]))
+
 # %%

@@ -1,0 +1,114 @@
+#%%
+
+import numpy as np
+from scipy.sparse import diags
+from math import floor
+import matplotlib.pyplot as plt
+
+
+def gen_diag_mat(N,entries):
+
+    """
+    A function that uses scipy.sparse.diags to generated a diagonal matrix
+
+    Parameters
+    ----------
+    N : Integer
+        Size of matrix is NxN
+    entries : Python list
+        Entries to be placed on the diagonals of the matrix.
+
+    Returns
+    -------
+    Returns a numpy matrix of size NxN with the entries placed on the diagonals.
+    """
+
+    length = len(entries) # Number of diagonals
+    lim = floor(length/2) # +/- limits of diagonals
+    diagonals = range(-lim,lim+1) # Which diagonals to put the entries in
+
+    k = [[] for _ in range(length)] # Create a list of empty lists
+    for i in range(length):
+        k[i] = entries[i]*np.ones(N - abs(diagonals[i])) # Fill the lists with the entries
+    mat = diags(k,diagonals).toarray() # Create the N-diagonal matrix
+
+    return mat
+
+def Grid(N = 10, a = 0, b = 1):
+
+    x = np.linspace(a,b,N+1)
+    dx = (b-a)/N
+
+    class grid:
+        def __init__(self,x,dx):
+            self.x = x
+            self.dx = dx
+
+    return grid(x,dx)
+
+def BoundaryCondition(bcon_type = 'dirichlet', value = 0):
+
+    if bcon_type == 'dirichlet':
+        A_entry = 1
+        b_entry = value
+        increase_size_of_N = 1
+
+    elif bcon_type == 'neumann':
+        pass
+
+    elif bcon_type == 'robin':
+        pass
+
+    else:
+        raise ValueError('Boundary condition type not recognized')
+
+
+    class BC:
+        def __init__(self,name,value):
+            self.name = bcon_type
+            self.value = value
+
+    return BC(bcon_type,value)
+
+def construct_A_and_b(grid,bc_left,bc_right):
+
+    x = grid.x
+    dx = grid.dx
+    N = len(x)-1
+
+    A = gen_diag_mat(N-1,[1,-2,1])
+
+
+
+    b = np.zeros(N-1)
+    b[0] = bc_left.value
+    b[-1] = bc_right.value
+
+    return [A, b]
+
+def q(x):
+
+    return 1
+
+# %%
+
+bc_left = BoundaryCondition('dirichlet', 2)
+bc_right = BoundaryCondition('dirichlet', 5)
+grid = Grid(10,0,10)
+alpha = bc_left.value
+beta = bc_right.value
+dx = grid.dx
+
+[A_DD, b_DD] = construct_A_and_b(grid,bc_left,bc_right)
+u = np.linalg.solve(A_DD,-b_DD-dx**2)
+
+def sol_no_source(x,a,b,alpha,beta):
+
+    return ((beta-alpha))/(b-a)*(x-a)+alpha
+
+
+u_true = sol_no_source(grid.x,0,10,2,5)
+plt.plot(grid.x,u_true)
+plt.plot(grid.x[1:-1], u, 'o')
+
+# %%

@@ -1,0 +1,21 @@
+#%%
+
+import numpy as np
+import matplotlib.pyplot as plt
+from shooting import shooting
+from continuation import continuation, PA_continuation
+from functions import PPM, h
+
+
+
+
+
+
+
+#u = continuation(PPM,[0.57,0.31,21],[-10,0.2,0.1])
+# %%
+
+u_h = PA_continuation(h)
+
+plt.plot(u_h[1,:],u_h[0,:])
+# %%

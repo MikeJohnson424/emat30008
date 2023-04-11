@@ -39,13 +39,11 @@ def gen_diag_mat(N,entries):
 
     return mat
 
-#%%
-
 def f_diff_solver(x_span,b_cond,N,b_cond_type='double-dirichlet'):
 
     alpha, beta = b_cond # Unpack boundary conditions
     a,b, = x_span # Unpack limits of x
-    delta_x = (b-a)/N 
+    dx = (b-a)/N 
     x = np.linspace(a,b,N+1)
 
     if b_cond_type == 'double-dirichlet':
@@ -53,7 +51,7 @@ def f_diff_solver(x_span,b_cond,N,b_cond_type='double-dirichlet'):
         # alpha, beta = u(a), u(b) respectively
 
         A_DD = gen_diag_mat(N-1,[1,-2,1])
-        b_DD = np.hstack((alpha,np.zeros(N-3),beta))+delta_x**2*q(x[1:-1],None)
+        b_DD = np.hstack((alpha,np.zeros(N-3),beta))+dx**2*q(x[1:-1],None)
         
         u_sol = np.linalg.solve(A_DD,-b_DD)
         u_full = np.hstack((alpha,u_sol,beta))
@@ -64,7 +62,7 @@ def f_diff_solver(x_span,b_cond,N,b_cond_type='double-dirichlet'):
 
         A_DN = gen_diag_mat(N,[1,-2,1])
         A_DN[-1,-2] = 2
-        b_DN = np.hstack((alpha,np.zeros(N-2),2*beta*delta_x))+delta_x**2*q(x[1:],None)
+        b_DN = np.hstack((alpha,np.zeros(N-2),2*beta*dx))+dx**2*q(x[1:],None)
         
         u_sol = np.linalg.solve(A_DN,-b_DN)
         u_full = np.hstack((alpha,u_sol))
@@ -75,7 +73,7 @@ def f_diff_solver(x_span,b_cond,N,b_cond_type='double-dirichlet'):
 
         A_DR = gen_diag_mat(N,[1,-2,1])
         A_DR[-1,-2] = 2
-        b_DR = np.hstack((alpha,np.zeros(N-2),2*beta*delta_x))+delta_x**2*q(x[1:],None)
+        b_DR = np.hstack((alpha,np.zeros(N-2),2*beta*dx))+dx**2*q(x[1:],None)
         
         u_sol = np.linalg.solve(A_DR,-b_DR)
         u_full = np.hstack((alpha,u_sol))
@@ -85,34 +83,4 @@ def f_diff_solver(x_span,b_cond,N,b_cond_type='double-dirichlet'):
             self.u = u
             self.x = x
 
-
     return result(u_full,x)
-
-#%%
-
-x_span = [0,10]; b_cond = [0,5]; N = 10; a,b = x_span; alpha,beta = b_cond; delta_x = (b-a)/N;
-
-result = f_diff_solver(x_span,b_cond,N,b_cond_type='double-dirichlet')
-u = result.u
-x = result.x
-
-def sol_no_source(x,a,b,alpha,beta):
-
-    return ((beta-alpha))/(b-a)*(x-a)+alpha
-
-def sol_source_1(x,a,b,alpha,beta,D=1):
-
-    return -1/(2*D)*(x-a)*(x-b)+((beta-alpha))/(b-a)*(x-a)+alpha
-
-u_true = sol_source_1(x,a,b,alpha,beta)
-#u_true = sol_no_source(x,a,b,alpha,beta)
-
-plt.plot(x,u)
-#plt.plot(x,u_true)
-
-
-
-
-
-
-# %%
