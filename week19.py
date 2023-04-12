@@ -1,20 +1,15 @@
 #%%
 
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.sparse import diags
 from math import floor
+import matplotlib.pyplot as plt
 
-#%%
-
-def q(x,u):
-
-    return 1
 
 def gen_diag_mat(N,entries):
 
     """
-    A function that uses scipy.sparse.diags to generated a diagonal matrix
+    A function that uses scipy.sparse.diags to generate a diagonal matrix
 
     Parameters
     ----------
@@ -33,54 +28,124 @@ def gen_diag_mat(N,entries):
     diagonals = range(-lim,lim+1) # Which diagonals to put the entries in
 
     k = [[] for _ in range(length)] # Create a list of empty lists
+
     for i in range(length):
         k[i] = entries[i]*np.ones(N - abs(diagonals[i])) # Fill the lists with the entries
     mat = diags(k,diagonals).toarray() # Create the N-diagonal matrix
 
     return mat
 
-def f_diff_solver(x_span,b_cond,N,b_cond_type='double-dirichlet'):
+def Grid(N = 10, a = 0, b = 1):
 
-    alpha, beta = b_cond # Unpack boundary conditions
-    a,b, = x_span # Unpack limits of x
-    dx = (b-a)/N 
     x = np.linspace(a,b,N+1)
+    dx = (b-a)/N
 
-    if b_cond_type == 'double-dirichlet':
-
-        # alpha, beta = u(a), u(b) respectively
-
-        A_DD = gen_diag_mat(N-1,[1,-2,1])
-        b_DD = np.hstack((alpha,np.zeros(N-3),beta))+dx**2*q(x[1:-1],None)
-        
-        u_sol = np.linalg.solve(A_DD,-b_DD)
-        u_full = np.hstack((alpha,u_sol,beta))
-
-    elif b_cond_type == 'dirichlet-neumann':
-
-        # alpha, beta = u(a), u'(b) respectively
-
-        A_DN = gen_diag_mat(N,[1,-2,1])
-        A_DN[-1,-2] = 2
-        b_DN = np.hstack((alpha,np.zeros(N-2),2*beta*dx))+dx**2*q(x[1:],None)
-        
-        u_sol = np.linalg.solve(A_DN,-b_DN)
-        u_full = np.hstack((alpha,u_sol))
-
-    elif b_cond_type == 'dirichlet-robin':
-
-        # alpha, beta = u(a), u'(b) respectively
-
-        A_DR = gen_diag_mat(N,[1,-2,1])
-        A_DR[-1,-2] = 2
-        b_DR = np.hstack((alpha,np.zeros(N-2),2*beta*dx))+dx**2*q(x[1:],None)
-        
-        u_sol = np.linalg.solve(A_DR,-b_DR)
-        u_full = np.hstack((alpha,u_sol))
-
-    class result:
-        def __init__(self,u,x):
-            self.u = u
+    class grid:
+        def __init__(self,x,dx):
             self.x = x
+            self.dx = dx
 
-    return result(u_full,x)
+    return grid(x,dx)
+
+def BoundaryCondition(bcon_type, value):
+    
+    """
+    A function that defines various features of the A matrix in the finite difference matrix equation
+
+    Parameters
+    ----------
+    bcon_type : String
+        Determine the nature of the boundary condition
+    Value : Float
+        The associated value alongsie the boundary condition.
+
+    Returns
+    -------
+    Returns a class containing the modified A entry, value and type of boundary condition.
+    """
+
+    if bcon_type == 'dirichlet':
+        bcon_type = 'dirichlet'
+        A_entry = [-2,1]
+
+    elif bcon_type == 'neumann':
+        A_entry = [-2,2]
+
+    elif bcon_type == 'robin':
+        A_entry = [-2*(1+value*dx), 2]
+
+    else:
+        raise ValueError('Boundary condition type not recognized')
+
+    class BC:
+        def __init__(self,type,value, A_entry):
+            self.type = bcon_type
+            self.value = value
+            self.A_entry = A_entry
+
+    return BC(bcon_type,value, A_entry)
+
+def construct_A_and_b(grid,bc_left,bc_right):
+
+    x = grid.x
+    dx = grid.dx
+    N = len(x)-1
+    b = np.zeros(N+1)
+
+    # Set entries at either end of b vector (if dirichlet condition set then entries are not considered in calculation)
+
+    b[0] = 2*bc_left.value*dx
+    b[-1] = 2*bc_right.value*dx 
+
+    A = gen_diag_mat(N+1,[1,-2,1])
+
+    # Change A entries depending on boundary conditions set
+
+    A[0,:2] = bc_left.A_entry
+    A[-1,-2:] = bc_right.A_entry.reverse()
+
+    # Delete first column and row, update b vector if left boundary condition is dirichlet
+
+    if bc_left.type == 'dirichlet':
+
+        A = A[1:,1:]
+        b = b[1:]
+        b[0] = bc_left.value
+
+    # Delete last column and row, update b vector if right boundary condition is dirichlet
+
+    if bc_right.type == 'dirichlet':
+
+        A = A[:-1,:-1]
+        b = b[:-1]
+        b[-1] = bc_right.value
+    
+
+    return [A, b]
+
+def q(x):
+
+    return 1
+
+# %%
+
+bc_left = BoundaryCondition('dirichlet', 2)
+bc_right = BoundaryCondition('dirichlet', 5)
+grid = Grid(N=100, a=0, b=10)
+alpha = bc_left.value
+beta = bc_right.value
+dx = grid.dx
+
+[A_DD, b_DD] = construct_A_and_b(grid,bc_left,bc_right)
+u = np.linalg.solve(A_DD,-b_DD-dx**2)
+
+def sol_no_source(x,a,b,alpha,beta):
+
+    return ((beta-alpha))/(b-a)*(x-a)+alpha
+
+
+u_true = sol_no_source(grid.x,0,10,2,5)
+plt.plot(grid.x,u_true)
+plt.plot(grid.x[1:-1], u, 'o', markersize = 2)
+
+# %%
