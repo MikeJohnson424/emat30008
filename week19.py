@@ -102,7 +102,9 @@ def construct_A_and_b(grid,bc_left,bc_right):
     # Change A entries depending on boundary conditions set
 
     A[0,:2] = bc_left.A_entry
-    A[-1,-2:] = bc_right.A_entry.reverse()
+    A_entry_right = bc_right.A_entry
+    A_entry_reversed = A_entry_right[::-1]
+    A[-1,-2:] = A_entry_reversed
 
     # Delete first column and row, update b vector if left boundary condition is dirichlet
 
@@ -125,27 +127,36 @@ def construct_A_and_b(grid,bc_left,bc_right):
 
 def q(x):
 
-    return 1
-
-# %%
-
-bc_left = BoundaryCondition('dirichlet', 2)
-bc_right = BoundaryCondition('dirichlet', 5)
-grid = Grid(N=100, a=0, b=10)
-alpha = bc_left.value
-beta = bc_right.value
-dx = grid.dx
-
-[A_DD, b_DD] = construct_A_and_b(grid,bc_left,bc_right)
-u = np.linalg.solve(A_DD,-b_DD-dx**2)
+    return np.ones(len(x))
 
 def sol_no_source(x,a,b,alpha,beta):
 
     return ((beta-alpha))/(b-a)*(x-a)+alpha
 
+def sol_source(x,a,b,alpha,beta,D):
 
-u_true = sol_no_source(grid.x,0,10,2,5)
-plt.plot(grid.x,u_true)
+    return -1/(2*D)*(x-a)*(x-b)+(beta-alpha)/(b-a)*(x-a)+alpha
+
+# %%
+
+
+bc_left = BoundaryCondition('dirichlet', 5)
+bc_right = BoundaryCondition('dirichlet',10)
+grid = Grid(N=100, a=0, b=10)
+alpha = bc_left.value
+beta = bc_right.value
+dx = grid.dx
+D = 0.1
+
+[A, b] = construct_A_and_b(grid,bc_left,bc_right)
+u = np.linalg.solve(A,-b-dx**2/D*q(grid.x[1:-1]))
+
+# Plot results against true solution
+
+#u_true_no_source = sol_no_source(grid.x,0,10,alpha,beta)
+#u_true_source = sol_source(grid.x,0,10,alpha,beta,D)
+
+#plt.plot(grid.x,u_true_source)
 plt.plot(grid.x[1:-1], u, 'o', markersize = 2)
 
 # %%
