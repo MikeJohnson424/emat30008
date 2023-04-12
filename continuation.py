@@ -35,7 +35,6 @@ def NP_continuation(func,x0=[-5],alpha0=-10,imax=1000,step_size = 0.01):
         
     return [x, alpha]
 
-
 # %%
 """ == WORKING PSUEDO ARCLENGTH CONTINUATION FOR h(x,alpha) == """
 
