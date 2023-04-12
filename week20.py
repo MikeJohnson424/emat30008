@@ -1,40 +1,32 @@
+#%%
+
 import numpy as  np
-from week19 import gen_diag_mat
+from week19v2 import construct_A_and_b, BoundaryCondition, Grid
 from math import ceil
+import matplotlib.pyplot as plt
 
-a= 0; b = 1; alpha= 1; beta = 0, D = 0.5
-N = 10
-f = lambda x: np.zeros(np.size(x))
+def solve_diffusion(grid,bc_left,bc_right,D,dt,t_steps):
 
-x = np.linspace(a,b,N+1)
-dx = (b-a)/N
-x_int = x[1:-1]
+    dx = grid.dx
+    [A,b] = construct_A_and_b(grid,bc_left,bc_right)
+    #u = np.linalg.solve(A,-b-dx**2)
+    u = np.zeros(len(grid.x)-2)
 
-C = 0.49
+    for n in range(t_steps):
 
-dt = C * dx**2 / D
-t_final = 1
-N_time = ceil(t_final/dt)
+        u_new = u + dt*D/dx**2*(np.dot(A,u)+b)
+        u = u_new
 
+    return u
 
-u = np.zeros((N_time+1,N-1))
-u[0,:] = f(x_int)
+#%%
 
+bc_left = BoundaryCondition('dirichlet', 2)
+bc_right = BoundaryCondition('dirichlet', 5)
+grid = Grid(N=10, a=0, b=10)
 
-for n in range(N_time):
+u = solve_diffusion(grid,bc_left,bc_right,D=1,dt=0.1,t_steps=1000)
 
-    for i in range(N-1):
+plt.plot(grid.x[1:-1],u, 'o', markersize = 2)
 
-        if i==0:
-            u[N+1,0] = n[n,0] + C * (alpha - 2 * u[n,0] + u[n,1])
-        if 0 < i and i < N-2:
-        else:
-
-
-
-
-
-
-
-
-
+# %%
