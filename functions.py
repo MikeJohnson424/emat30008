@@ -63,8 +63,9 @@ def hopf_normal_form_sol(t, beta=1, theta=0): # Define solution to hopf normal f
     return np.array([x1,x2])
 
 def h(x,t=None,parameters=[]):
-    alpha = parameters
-    return x**3-x-alpha
+    alpha = parameters[0]
+    return x[0]**3-x[0]+alpha
+
 
 
 
