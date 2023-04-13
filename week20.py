@@ -30,6 +30,6 @@ grid = Grid(N=10, a=0, b=10)
 
 u = explicit_diffusion_solver(grid,bc_left,bc_right,D=1,dt=0.1,t_steps=1000)
 
-#plt.plot(grid.x[1:-1],u, 'o', markersize = 2)
+plt.plot(grid.x[1:-1],u, 'o', markersize = 2)
 
 # %%

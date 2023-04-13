@@ -13,5 +13,6 @@ def shooting(func,init,parameters):
     sol = solve_to(func,x_0,T,parameters) 
     x_T = sol.x[:,-1]
     dxdt_0 = func(x_0,0,parameters)[0]
+    
     return np.hstack((x_0 - x_T, dxdt_0))
 
