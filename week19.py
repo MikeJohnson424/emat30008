@@ -56,8 +56,12 @@ def BoundaryCondition(bcon_type, value):
     ----------
     bcon_type : String
         Determine the nature of the boundary condition
-    Value : Float
-        The associated value alongsie the boundary condition.
+    Value : Python list
+        The associated values corresponding to the boundary condition. 
+        For example, for a Dirichlet condition, the value is the value 
+        of the function at the boundary. For a Neumann condition, the 
+        value is the derivative of the function at the boundary. For 
+        a Robin condition, the value is a list containing the delta and gamma values.
 
     Returns
     -------
@@ -72,7 +76,7 @@ def BoundaryCondition(bcon_type, value):
         A_entry = [-2,2]
 
     elif bcon_type == 'robin':
-        A_entry = [-2*(1+value*dx), 2]
+        A_entry = [-2*(1+value[1]*dx), 2] # Value = [delta, gamma]
 
     else:
         raise ValueError('Boundary condition type not recognized')
@@ -94,8 +98,8 @@ def construct_A_and_b(grid,bc_left,bc_right):
 
     # Set entries at either end of b vector (if dirichlet condition set then entries are not considered in calculation)
 
-    b[0] = 2*bc_left.value*dx
-    b[-1] = 2*bc_right.value*dx 
+    b[0] = 2*bc_left.value[0]*dx
+    b[-1] = 2*bc_right.value[0]*dx 
 
     A = gen_diag_mat(N+1,[1,-2,1])
 
@@ -112,7 +116,7 @@ def construct_A_and_b(grid,bc_left,bc_right):
 
         A = A[1:,1:]
         b = b[1:]
-        b[0] = bc_left.value
+        b[0] = bc_left.value[0]
 
     # Delete last column and row, update b vector if right boundary condition is dirichlet
 
@@ -120,7 +124,7 @@ def construct_A_and_b(grid,bc_left,bc_right):
 
         A = A[:-1,:-1]
         b = b[:-1]
-        b[-1] = bc_right.value
+        b[-1] = bc_right.value[0]
     
 
     return [A, b]
@@ -140,8 +144,8 @@ def sol_source(x,a,b,alpha,beta,D):
 # %%
 
 
-bc_left = BoundaryCondition('dirichlet', 5)
-bc_right = BoundaryCondition('dirichlet',10)
+bc_left = BoundaryCondition('dirichlet', [5])
+bc_right = BoundaryCondition('dirichlet',[10])
 grid = Grid(N=100, a=0, b=10)
 alpha = bc_left.value
 beta = bc_right.value
