@@ -4,7 +4,7 @@ import numpy as np
 from scipy.sparse import diags
 from math import floor
 import matplotlib.pyplot as plt
-
+from functions import sol_no_source, sol_source
 
 def gen_diag_mat(N,entries):
 
@@ -41,11 +41,13 @@ def Grid(N = 10, a = 0, b = 1):
     dx = (b-a)/N
 
     class grid:
-        def __init__(self,x,dx):
+        def __init__(self,x,dx,left,right):
             self.x = x
             self.dx = dx
+            self.left = left
+            self.right = right
 
-    return grid(x,dx)
+    return grid(x,dx,a,b)
 
 def BoundaryCondition(bcon_type, value):
     
@@ -69,13 +71,18 @@ def BoundaryCondition(bcon_type, value):
     """
 
     if bcon_type == 'dirichlet':
-        bcon_type = 'dirichlet'
+        if type(value) != list or len(value) != 1:
+            raise ValueError('Dirichlet condition requires a list containing a single value')
         A_entry = [-2,1]
 
     elif bcon_type == 'neumann':
+        if type(value) != list or len(value) != 1:
+            raise ValueError('Neumann condition requires a list containing a single value')
         A_entry = [-2,2]
 
     elif bcon_type == 'robin':
+        if type(value) != list or len(value) != 2:
+            raise ValueError('Robin condition requires a list containing two values')
         A_entry = [-2*(1+value[1]*dx), 2] # Value = [delta, gamma]
 
     else:
@@ -133,22 +140,14 @@ def q(x):
 
     return np.ones(len(x))
 
-def sol_no_source(x,a,b,alpha,beta):
-
-    return ((beta-alpha))/(b-a)*(x-a)+alpha
-
-def sol_source(x,a,b,alpha,beta,D):
-
-    return -1/(2*D)*(x-a)*(x-b)+(beta-alpha)/(b-a)*(x-a)+alpha
+def bratu(x):
+    
+        return np.exp(x)
 
 # %%
 
-
-bc_left = BoundaryCondition('dirichlet', [5])
-bc_right = BoundaryCondition('dirichlet',[10])
-grid = Grid(N=100, a=0, b=10)
-alpha = bc_left.value
-beta = bc_right.value
+bc_left = BoundaryCondition('dirichlet', [5]);bc_right = BoundaryCondition('dirichlet',[10])
+grid = Grid(N=100, a=0, b=10);alpha = bc_left.value[0];beta = bc_right.value[0]
 dx = grid.dx
 D = 0.1
 
@@ -158,9 +157,9 @@ u = np.linalg.solve(A,-b-dx**2/D*q(grid.x[1:-1]))
 # Plot results against true solution
 
 #u_true_no_source = sol_no_source(grid.x,0,10,alpha,beta)
-#u_true_source = sol_source(grid.x,0,10,alpha,beta,D)
+u_true_source = sol_source(grid.x,0,10,alpha,beta,D)
 
-#plt.plot(grid.x,u_true_source)
+plt.plot(grid.x,u_true_source)
 plt.plot(grid.x[1:-1], u, 'o', markersize = 2)
 
 # %%
