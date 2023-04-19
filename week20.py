@@ -9,11 +9,10 @@ import types
 
 def q(x,t,u):
     
-    x = x[1:-1]
     array_size = len(x)
     t = np.full((array_size,1),t).flatten()
 
-    return np.zeros(array_size)
+    return np.ones(array_size)
 
 def InitialCondition(initial_condition): 
 
@@ -51,20 +50,32 @@ def explicit_diffusion_solver(grid,bc_left,bc_right,IC,D,t_steps):
     dx = grid.dx # Grid spacing
     x = grid.x
     [A,b] = construct_A_and_b(grid,bc_left,bc_right) # Construct A and b matrices
-    u = np.zeros((len(grid.x)-2,t_steps+1)) # Initialise array to store solutions
+
+    u = np.zeros((len(grid.x),t_steps+1)) # Initialise array to store solutions
+
+    # Set initial condition
 
     if IC.IC_type == 'function':
-         
-         u_old = IC.initial_condition(x[1:-1]) # Set initial condition
+         u[:,0] = IC.initial_condition(x) # Set initial condition
 
     if IC.IC_type == 'constant':
-            
-        u_old = IC.initial_condition*np.ones(len(grid.x)-2) # Set initial condition
+        u[:,0] = IC.initial_condition*np.ones(len(grid.x)) # Set initial condition
+
+    # Remove rows from solution matrix if dirichlet boundary conditions are used
+
+    if bc_left.type == 'dirichlet':
+        u = u[:-1] 
+        x = x[1:]
+    if bc_right.type == 'dirichlet':
+        u = u[1:]  
+        x = x[:-1] 
+
+    u_old = u[:,0] # Set initial condition as old solution 
 
     for n in range(t_steps):
 
         dt = 0.5*dx**2/D # Recalculate dt to ensure stability
-        t = dt*t_steps # Current time
+        t = dt*n # Current time
 
         u_new = u_old + dt*D/dx**2*(np.matmul(A,u_old)+b(t)) + dt*q(x,t,u_old) # Time march solution
         u_old = u_new
@@ -78,8 +89,8 @@ def explicit_diffusion_solver(grid,bc_left,bc_right,IC,D,t_steps):
 
 
 grid = Grid(N=10,a = 0,b = 10)
-bc_left = BoundaryCondition('dirichlet',[lambda t: np.sin(t)])
-bc_right = BoundaryCondition('dirichlet',[lambda t: 10])
+bc_left = BoundaryCondition('dirichlet',[lambda t: 20*np.sin(t)])
+bc_right = BoundaryCondition('neumann',[lambda t: 10])
 IC = InitialCondition(0)
 x = grid.x
 dx = grid.dx
@@ -87,19 +98,19 @@ t_steps = 10000
 
 u = explicit_diffusion_solver(grid,bc_left,bc_right,IC,D=1,t_steps=t_steps)
 
-plt.plot(grid.x[1:-1],u[:,-1], 'o', markersize = 2)
+plt.plot(grid.x[1:],u[:,-1], 'o', markersize = 2)
 
 # %%
 """ ANIMATING SOLUTION """
 
 fig,ax = plt.subplots()
 
-line, = ax.plot(x[1:-1],u[:,0])
-ax.set_ylim(0,20)
+line, = ax.plot(x[1:],u[:,0])
+ax.set_ylim(-20,100)
 ax.set_xlim(0,10)
 
 def animate(i):
-    line.set_data((x[1:-1],u[:,i]))
+    line.set_data((x[1:],u[:,i]))
     return line,
 
 ani = FuncAnimation(fig, animate, frames=t_steps, interval=100, blit=True)
