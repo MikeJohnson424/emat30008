@@ -20,6 +20,7 @@ def g(x,t=None,parameters=[]): # Define ODE: d2xdt2 = -x
     return np.array([x_dot0,x_dot1])
 
 def PPM(x,t=None,parameters = [1,0.2,0.1]): # Define predator-prey model
+
     a,b,d = parameters
     x,y = x
     dx_dt = x*(1-x)-(a*x*y)/(d+x)
@@ -63,8 +64,15 @@ def hopf_normal_form_sol(t, beta=1, theta=0): # Define solution to hopf normal f
     return np.array([x1,x2])
 
 def h(x,t=None,parameters=[]):
-    alpha = parameters[0]
-    return x[0]**3-x[0]+alpha
+    return x[0]**3-x[0]+parameters[0]
+
+def sol_source(x,a,b,alpha,beta,D): # True solution to week19 question 2
+
+    return -1/(2*D)*(x-a)*(x-b)+(beta-alpha)/(b-a)*(x-a)+alpha
+
+def sol_no_source(x,a,b,alpha,beta): # True solution to week 19 question 1
+
+    return ((beta-alpha))/(b-a)*(x-a)+alpha
 
 
 
