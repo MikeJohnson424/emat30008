@@ -7,12 +7,13 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation 
 import types
 
-def q(x,t,u=None):
-
+def q(x,t,u):
+    
+    x = x[1:-1]
     array_size = len(x)
-    time_array = np.full((array_size,1), t)
+    t = np.full((array_size,1),t).flatten()
 
-    return np.add(x, time_array)
+    return np.zeros(array_size)
 
 def InitialCondition(initial_condition): 
 
@@ -65,7 +66,7 @@ def explicit_diffusion_solver(grid,bc_left,bc_right,IC,D,t_steps):
         dt = 0.5*dx**2/D # Recalculate dt to ensure stability
         t = dt*t_steps # Current time
 
-        u_new = u_old + dt*D/dx**2*(np.matmul(A,u_old)+b) #+ dt*q(x,t,u_old) # Time march solution
+        u_new = u_old + dt*D/dx**2*(np.matmul(A,u_old)+b(t)) + dt*q(x,t,u_old) # Time march solution
         u_old = u_new
 
         u[:,n+1] = u_new # Store solution
@@ -76,10 +77,10 @@ def explicit_diffusion_solver(grid,bc_left,bc_right,IC,D,t_steps):
 #%%
 
 
-grid = Grid(N=100,a = 0,b = 10)
-bc_left = BoundaryCondition('dirichlet',[5])
-bc_right = BoundaryCondition('dirichlet',[10])
-IC = InitialCondition(lambda x: np.exp(x))
+grid = Grid(N=10,a = 0,b = 10)
+bc_left = BoundaryCondition('dirichlet',[lambda t: np.sin(t)])
+bc_right = BoundaryCondition('dirichlet',[lambda t: 10])
+IC = InitialCondition(0)
 x = grid.x
 dx = grid.dx
 t_steps = 10000
@@ -94,12 +95,13 @@ plt.plot(grid.x[1:-1],u[:,-1], 'o', markersize = 2)
 fig,ax = plt.subplots()
 
 line, = ax.plot(x[1:-1],u[:,0])
-ax.set_ylim(0,1000)
+ax.set_ylim(0,20)
+ax.set_xlim(0,10)
 
 def animate(i):
     line.set_data((x[1:-1],u[:,i]))
     return line,
 
-ani = FuncAnimation(fig, animate, frames=t_steps, interval=1, blit=True)
+ani = FuncAnimation(fig, animate, frames=t_steps, interval=100, blit=True)
 plt.show()
 # %%
