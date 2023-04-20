@@ -24,7 +24,7 @@ def euler_step(deltat_max,x, func,parameters,t=None): # define function to compu
     Returns a python list defining the solution at the next time-level.
     """
 
-    x_n1 = x + deltat_max*func(x)
+    x_n1 = x + deltat_max*func(x,t)
     return x_n1
 
 def RK4_step(deltat_max,x,func,parameters,t=None):
@@ -120,11 +120,14 @@ def solve_to(func, x0, t, parameters, deltat_max=0.01, method = 'RK4'):
 
 #%%
 
-from functions import f
+def f(x,t,paramters=[]):
 
-result = solve_to(func = f,x0 = [1],t = 1,parameters = [], deltat_max = 0.1)
+    return (x**2+t**2)
 
-#plt.plot(result.t_space,result.x[0])
+result = solve_to(func = f,x0 = [1],t=0.4,parameters = [], deltat_max = 0.0001, method='forward_euler')
+
+plt.plot(result.t_space,result.x[0])
+print(result.x[0,-1])
 
 #print('e ~ ' + str(result.x[0,-1]))
 
