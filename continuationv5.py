@@ -23,19 +23,7 @@ def corrector(myode, u,u_pred,delta_u,vary_par,par0):
     R2 = np.dot(u - u_pred, delta_u)
     return np.hstack((R1,R2))
 
-def continuation(myode,  # the ODE to use
-    x0,  # the initial state
-    par0,  # the initial parameters
-    vary_par=0,  # the index of the parameter to vary
-    step_size=0.1,  # the size of the steps to take
-    max_steps=50,  # the number of steps to take
-    discretisation=shooting,  # the discretisation to use
-    solver=root):  # the solver to use
-    
-    x_dim = len(x0) # Dimension of the solution
-    par_dim = len(par0) # Dimension of the parameter space (i.e. number of parameters)
-    
-    u = gen_sol_mat(x0,x_dim,max_steps) # Initialise matrix to contain solution and varying parameter
+def find_initial_solutions(solver,myode,x0,par0,vary_par,step_size):
 
     u_old = np.hstack((
         solver(lambda x: myode(x,None,par0),x0).x,
@@ -46,6 +34,22 @@ def continuation(myode,  # the ODE to use
         solver(lambda x: myode(x,None,par0),u_old[:-1]).x,
         par0[vary_par]
     ))
+
+    return [u_old,u_current]
+
+def continuation(myode,  # the ODE to use
+    x0,  # the initial state
+    par0,  # the initial parameters
+    vary_par=0,  # the index of the parameter to vary
+    step_size=0.1,  # the size of the steps to take
+    max_steps=50,  # the number of steps to take
+    discretisation=shooting,  # the discretisation to use
+    solver=root):  # the solver to use
+    
+    x_dim = len(x0) # Dimension of the solution
+    u = gen_sol_mat(x0,x_dim,max_steps) # Initialise matrix to contain solution and varying parameter
+
+    u_old,u_current = find_initial_solutions(solver,myode,x0,par0,vary_par,step_size)
 
     u[:,0] = u_old # Store first solution
 
@@ -68,6 +72,7 @@ def continuation(myode,  # the ODE to use
         
 
     return u
+
 
 
 # %%
