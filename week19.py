@@ -124,6 +124,11 @@ def construct_A_and_b(grid,bc_left,bc_right):
 
     def b_func(t):
 
+        if type(bc_right.value[0]) != types.FunctionType:
+            bc_left.value[0] = lambda t: bc_left.value[0]
+        if type(bc_right.value[0]) != types.FunctionType:
+            bc_right.value[0] = lambda t: bc_right.value[0]
+            
         b[0] = 2*bc_left.value[0](t)*dx
         b[-1] = 2*bc_right.value[0](t)*dx 
     
@@ -150,8 +155,10 @@ def bratu(x):
 
 t = None
 
-bc_left = BoundaryCondition('dirichlet', [lambda  t: 5]);bc_right = BoundaryCondition('dirichlet',[lambda t: 10])
-grid = Grid(N=100, a=0, b=10);alpha = bc_left.value[0](t);beta = bc_right.value[0](t)
+alpha = 5;beta = 10
+
+bc_left = BoundaryCondition('dirichlet', [lambda t: 5]);bc_right = BoundaryCondition('dirichlet',[lambda t: 10])
+grid = Grid(N=100, a=0, b=10)
 dx = grid.dx
 D = 0.1
 

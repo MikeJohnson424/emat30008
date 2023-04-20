@@ -12,7 +12,7 @@ def q(x,t,u):
     array_size = len(x)
     t = np.full((array_size,1),t).flatten()
 
-    return np.ones(array_size)
+    return np.zeros(array_size)
 
 def InitialCondition(initial_condition): 
 
@@ -89,9 +89,9 @@ def explicit_diffusion_solver(grid,bc_left,bc_right,IC,D,t_steps):
 
 
 grid = Grid(N=10,a = 0,b = 10)
-bc_left = BoundaryCondition('dirichlet',[lambda t: 20*np.sin(t)])
-bc_right = BoundaryCondition('neumann',[lambda t: 10])
-IC = InitialCondition(0)
+bc_left = BoundaryCondition('dirichlet',[lambda t: 0])
+bc_right = BoundaryCondition('neumann',[lambda t: 0])
+IC = InitialCondition(lambda x: 5-x**2)
 x = grid.x
 dx = grid.dx
 t_steps = 10000
