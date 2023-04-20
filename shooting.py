@@ -18,12 +18,15 @@ def shooting(func,init,parameters):
     
     return np.hstack((x_0 - x_T, dxdt_0))
 
+def find_lim_cycle_conditions(func,init,parameters):
 
-lim_cycle = root(lambda x: shooting(PPM,x,[1,0.1,0.1]),[0.5,0.5,20])
+    lim_cycle_initial_conditions = root(lambda x: shooting(func,x,parameters),init).x
+
+    return lim_cycle_initial_conditions
 
 # %%
 
-lim_cycle_initial_conditions = root(lambda x: shooting(PPM,x,[1,0.1,0.1]),[0.5,0.5,20]).x
+lim_cycle_conditions = find_lim_cycle_conditions(PPM,[0.5,0.5,20],[1,0.1,0.1])
 lim_cycle = solve_to(PPM,lim_cycle_initial_conditions[:-1],lim_cycle_initial_conditions[-1],[1,0.1,0.1])
 plt.plot(lim_cycle.x[0],lim_cycle.x[1])
 

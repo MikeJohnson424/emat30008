@@ -6,34 +6,54 @@ from shooting import shooting
 from scipy.optimize import fsolve,root
 from functions import PPM, h
 
+
 #%%
 
-def gen_sol_mat(x0,x_dim,max_steps):
+def gen_sol_mat(x_dim,max_steps):
     return np.zeros((x_dim+1,max_steps+1))
 
-def predictor(u_current, u_old):
+def predictor(u_current,u_old):
     delta_u = u_current - u_old
     u_pred = u_current + delta_u
     return [u_pred,delta_u]
 
-def corrector(myode, u,u_pred,delta_u,vary_par,par0):
+def corrector(myode,u,u_pred,delta_u,vary_par,par0):
 
     par0[vary_par] = u[-1]
     R1 = myode(u[:-1],None,par0)
     R2 = np.dot(u - u_pred, delta_u)
     return np.hstack((R1,R2))
 
-def find_initial_solutions(solver,myode,x0,par0,vary_par,step_size):
+def find_initial_solutions(solver,myode,x0,par0,vary_par,step_size,discretisation):
 
-    u_old = np.hstack((
-        solver(lambda x: myode(x,None,par0),x0).x,
-        par0[vary_par]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
-    ))
-    par0[vary_par] += step_size
-    u_current = np.hstack((
-        solver(lambda x: myode(x,None,par0),u_old[:-1]).x,
-        par0[vary_par]
-    ))
+    if discretisation == shooting: # Solve for limit cycle conditions
+        
+        u_old = np.hstack((
+            solver(lambda x: shooting(myode,x,par0),x0).x,
+            par0[vary_par]
+        ))   
+
+        par0[vary_par] += step_size 
+
+        u_current = np.hstack((
+            solver(lambda x: shooting(myode,x,par0),u_old[:-1]).x,
+            par0[vary_par]
+            )) 
+        
+    else: # Solve for equilibria
+
+        u_old = np.hstack((
+            solver(lambda x: myode(x,None,par0),x0).x,
+            par0[vary_par]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+        ))
+
+        par0[vary_par] += step_size
+        
+        u_current = np.hstack((
+            solver(lambda x: myode(x,None,par0),u_old[:-1]).x,
+            par0[vary_par]
+        ))
+    
 
     return [u_old,u_current]
 
@@ -43,13 +63,13 @@ def continuation(myode,  # the ODE to use
     vary_par=0,  # the index of the parameter to vary
     step_size=0.1,  # the size of the steps to take
     max_steps=50,  # the number of steps to take
-    discretisation=shooting,  # the discretisation to use
+    discretisation='equilibria',  # the discretisation to use
     solver=root):  # the solver to use
     
     x_dim = len(x0) # Dimension of the solution
-    u = gen_sol_mat(x0,x_dim,max_steps) # Initialise matrix to contain solution and varying parameter
+    u = gen_sol_mat(x_dim,max_steps) # Initialise matrix to contain solution and varying parameter
 
-    u_old,u_current = find_initial_solutions(solver,myode,x0,par0,vary_par,step_size)
+    u_old,u_current = find_initial_solutions(solver,myode,x0,par0,vary_par,step_size,discretisation)
 
     u[:,0] = u_old # Store first solution
 
@@ -72,7 +92,6 @@ def continuation(myode,  # the ODE to use
         
 
     return u
-
 
 
 # %%
