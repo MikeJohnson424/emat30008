@@ -55,7 +55,7 @@ def RK4_step(deltat_max,x,func,parameters,t=None):
     x_n1 = x + (deltat_max/6)*(k1+2*k2+2*k3+k4)
     return x_n1
 
-def solve_to(func, x0, t, parameters, deltat_max=0.01, method = 'RK4'):
+def solve_to(func, x0, t, parameters=[], deltat_max=0.01, method = 'RK4'):
 
     """
     A function that iterates over a time-range using a chosen integration method to solve for the solution of a 
@@ -120,7 +120,7 @@ def solve_to(func, x0, t, parameters, deltat_max=0.01, method = 'RK4'):
 
 #%%
 
-def f(x,t,paramters=[]):
+def f(x,t,parameters=[]):
 
     return (x**2+t**2)
 

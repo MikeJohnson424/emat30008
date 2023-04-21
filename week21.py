@@ -14,7 +14,7 @@ def implicit_diffusion_solver(grid,bc_left,bc_right,D,dt,t_steps):
     C = dt*D/dx**2 
     dx = grid.dx # Grid spacing
     [A,b] = construct_A_and_b(grid,bc_left,bc_right) # Construct A and b matrices
-    u = np.sin(np.pi*x[1:-1]) # Intialise u vector to zeros
+    u = np.sin(np.pi*x[1:-1]) # Intial condition
 
     for n in range(t_steps):
 

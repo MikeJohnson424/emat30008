@@ -6,6 +6,7 @@ from math import ceil
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation 
 import types
+from integrate import solve_to
 
 def q(x,t,u):
     
@@ -45,19 +46,22 @@ def InitialCondition(initial_condition):
 
     return IC(IC_type,initial_condition)
 
-def explicit_diffusion_solver(grid,bc_left,bc_right,IC,D,t_steps):
+def explicit_diffusion_solver(grid,bc_left,bc_right,IC,D,t_steps,method = 'euler'):
 
     dx = grid.dx # Grid spacing
     x = grid.x
     [A,b] = construct_A_and_b(grid,bc_left,bc_right) # Construct A and b matrices
-
+    dt = 0.5*dx**2/D # Recalculate dt to ensure stability
+    t_final = t_steps*dt # Final time
     u = np.zeros((len(grid.x),t_steps+1)) # Initialise array to store solutions
+
+    def du_dt(u,t,parameters): # Define function to be integrated
+        return D/dx**2*(np.matmul(A,u)+b(t)) + q(x,t,u)
 
     # Set initial condition
 
     if IC.IC_type == 'function':
          u[:,0] = IC.initial_condition(x) # Set initial condition
-
     if IC.IC_type == 'constant':
         u[:,0] = IC.initial_condition*np.ones(len(grid.x)) # Set initial condition
 
@@ -72,15 +76,23 @@ def explicit_diffusion_solver(grid,bc_left,bc_right,IC,D,t_steps):
 
     u_old = u[:,0] # Set initial condition as old solution 
 
-    for n in range(t_steps):
+    # Solve PDE depending on method set by user
 
-        dt = 0.5*dx**2/D # Recalculate dt to ensure stability
-        t = dt*n # Current time
+    if method == 'lines':
+    
+        u = solve_to(du_dt, u_old, t = t_final,parameters=[]).x
 
-        u_new = u_old + dt*D/dx**2*(np.matmul(A,u_old)+b(t)) + dt*q(x,t,u_old) # Time march solution
-        u_old = u_new
+    elif method == 'euler':
 
-        u[:,n+1] = u_new # Store solution
+        for n in range(t_steps):
+
+            dt = 0.5*dx**2/D # Recalculate dt to ensure stability
+            t = dt*n # Current time
+
+            u_new = u_old + dt*D/dx**2*(np.matmul(A,u_old)+b(t)) + dt*q(x,t,u_old) # Time march solution
+            u_old = u_new
+
+            u[:,n+1] = u_new # Store solution
         
     return u
 
