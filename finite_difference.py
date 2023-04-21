@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import types
 from integrate import solve_to
 import scipy.sparse as sp
-import scipy
 from matplotlib.animation import FuncAnimation 
 import plotly.graph_objects as go
 
@@ -179,7 +178,7 @@ def construct_A_and_b(grid,bc_left,bc_right,storage_type = 'dense'):
 
 def q(x,t,u):
 
-    return np.zeros(len(x))
+    return 0
 
 def du_dt(u, t, parameters):  # Define explicit temporal derivative of u
     A, b, q, D, dx, x = parameters
@@ -272,7 +271,8 @@ def diffusion_solver(grid,
     u = np.zeros((len(grid.x),t_steps+1)) # Initialise array to store solutions
     t_final = dt*t_steps # Final time
 
-    # Adjust functions for solving matrix equations and generating identity matrix depending on storage type.
+    # Adjust functions for solving matrix equations, generating identity matrix and
+    # matrix multiplication depending on storage type.
 
     if storage == 'dense':
         non_linear_solver = np.linalg.solve
@@ -302,7 +302,9 @@ def diffusion_solver(grid,
     if bc_right.type == 'dirichlet':
         u = u[1:]; x = x[:-1] 
 
-    u_old = u[:,0] # Set old solution as initial condition
+    U = u[:,0] # Set old solution as initial condition
+
+    # Solve for solution using chosen method
 
     if method == 'explicit-euler':
 
@@ -310,33 +312,30 @@ def diffusion_solver(grid,
 
             dt = 0.5*dx**2/D # Recalculate dt to ensure stability
             t = dt*n # Current time
-            u_new = u_old +dt*du_dt(u_old,t,[A,b,q,D,dx,x]) # Time march solution
-            u_old = u_new # Update old solution
-            u[:,n+1] = u_new # Store solution
+            U = U +dt*du_dt(U,t,[A,b,q,D,dx,x]) # Time march solution
+            u[:,n+1] = U # Store solution
 
     elif method == 'lines':
 
-        u = solve_to(du_dt, u_old, t = t_final,parameters=[A,b,q,D,dx,x],deltat_max = dt).x
+        u = solve_to(du_dt, U, t = t_final,parameters=[A,b,q,D,dx,x],deltat_max = dt).x
 
     elif method == 'implicit-euler':
 
         for n in range(t_steps):
 
             t = n*dt # Current time
-            u_new = non_linear_solver(gen_eye(len(u_old))-C*A,
-                                    u_old+C*b(t)) # Solve for u_n+1 using implicit method
-            u_old = u_new # Update u vector
-            u[:,n+1] = u_new # Store solution
+            U = non_linear_solver(gen_eye(len(U))-C*A,
+                                    U+C*b(t)) # Solve for u_n+1 using implicit method
+            u[:,n+1] = U # Store solution
 
     elif method == 'crank-nicolson':
 
         for n in range(t_steps):
 
             t = n*dt # Current time
-            u_new = non_linear_solver(gen_eye(len(u_old))-C/2*A,
-                                    mat_mul((gen_eye(len(u_old))+C/2*A),u_old)+np.dot(C,b(t)))
-            u_old = u_new # Update u vector
-            u[:,n+1] = u_new # Store solution
+            U = non_linear_solver(gen_eye(len(U))-C/2*A,
+                                    mat_mul((gen_eye(len(U))+C/2*A),U)+np.dot(C,b(t)))
+            u[:,n+1] = U # Store solution
 
     elif method == 'IMEX':
         pass
@@ -402,7 +401,7 @@ u = diffusion_solver(grid,
 
 # %%
 
-""" PLOTTING SOLUTION """
+""" PLOT SOLUTION AS 3D SURFACE """
 
 fig = go.Figure(data=[go.Surface(z=u, x=x, y=np.arange(0,(t_steps+1)*dt,dt))])
 fig.update_layout(title='u(x,t)', autosize=False,
@@ -410,7 +409,7 @@ fig.update_layout(title='u(x,t)', autosize=False,
         xaxis_title='t',
         yaxis_title='x',
         zaxis_title='u(x, t)'),
-                  width=500, height=500,
+                  width=1000, height=500,
                   margin=dict(l=65, r=50, b=65, t=90))
 fig.show()
 # %%
