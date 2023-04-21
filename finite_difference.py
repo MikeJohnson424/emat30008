@@ -8,6 +8,7 @@ from integrate import solve_to
 import scipy.sparse as sp
 import scipy
 from matplotlib.animation import FuncAnimation 
+import plotly.graph_objects as go
 
 def gen_diag_mat(N,entries):
 
@@ -43,20 +44,27 @@ def gen_diag_mat(N,entries):
 def Grid(N=10,a=0,b=1):
 
     """
-    A function that uses scipy.sparse.diags to generate a diagonal matrix
+    A function that generates various attributes used in diffusion_solver
 
     Parameters
     ----------
     N : Int
-        Size of matrix is NxN
-    entries : Python list
-        Entries to be placed on the diagonals of the matrix.
-    storage_type : String
-        Determines the storage type of the matrix. Can be 'dense' or 'sparse'.
+        Number of discrete points in domain, x, is N+1
+    a : Float or int
+        Lower limit of domain x
+    b : Flat or int
+        Upper limit of domain x
 
     Returns
     -------
-    Returns a numpy matrix of size NxN with the entries placed on the diagonals.
+    grid.x : Numpy array
+        Array of grid points
+    grid.dx : Float
+        Grid spacing
+    grid.left : Float
+        Lower limit of domain x
+    grid.right : Float
+        Upper limit of domain x
     """
     x = np.linspace(a,b,N+1)
     dx = (b-a)/N
@@ -70,7 +78,7 @@ def Grid(N=10,a=0,b=1):
 
     return grid(x,dx,a,b)
 
-def BoundaryCondition(bcon_type, value):
+def BoundaryCondition(bcon_type, value,grid):
     
     """
     A function that defines various features of the A matrix in the finite difference matrix equation
@@ -85,20 +93,23 @@ def BoundaryCondition(bcon_type, value):
         of the function at the boundary. For a Neumann condition, the 
         value is the derivative of the function at the boundary. For 
         a Robin condition, the value is a list containing the delta and gamma values.
-    
+    grid: object
+        An object containing the grid spacing and limits of the domain.
     Returns
     -------
     Returns a class containing the modified A entry, value and type of boundary condition.
     """
 
+    dx = grid.dx
+
     if bcon_type == 'dirichlet':
-        if type(value) != list or len(value) != 1:
-            raise ValueError('Dirichlet condition requires a function or list containing a single value or lambda function.')
+        if type(value) != list or len(value) != 1 or isinstance(value[0], types.FunctionType) == False:
+            raise ValueError('Dirichlet condition requires a python list containing a lambda function.')
         A_entry = [-2,1]
 
     elif bcon_type == 'neumann':
         if type(value) != list or len(value) != 1 or isinstance(value[0], types.FunctionType) == False:
-            raise ValueError('Neumann condition requires a list containing a lambda function')
+            raise ValueError('Neumann condition requires a python list containing a lambda function')
         A_entry = [-2,2]
 
     elif bcon_type == 'robin':
@@ -178,7 +189,6 @@ def du_dt(u, t, parameters):  # Define explicit temporal derivative of u
         return D / dx**2 * (A.dot(u) + b(t)) + q(x, t, u)
     else:
         raise ValueError('Matrix A must be either dense (numpy.ndarray) or sparse (scipy.sparse)')
-
 
 def InitialCondition(initial_condition): 
 
@@ -341,13 +351,14 @@ def diffusion_solver(grid,
 
 """ GENERATE SOLUTION """
 
-bc_left = BoundaryCondition('dirichlet', [lambda x: 5])
-bc_right = BoundaryCondition('dirichlet', [lambda x: 10])
-IC = InitialCondition(lambda x: np.sin(np.pi*x))
 grid = Grid(N=10, a=0, b=1)
+bc_left = BoundaryCondition('dirichlet', [lambda t: 0],grid)
+bc_right = BoundaryCondition('dirichlet', [lambda t: 0],grid)
+IC = InitialCondition(lambda x: 10*np.sin(np.pi*x))
+
 
 x = grid.x
-t_steps = 100
+t_steps = 1000
 storage = 'sparse'
 D=1
 dt = 0.1
@@ -364,23 +375,42 @@ u = diffusion_solver(grid,
                     t_steps=t_steps,
                     method='crank-nicolson',
                     storage = 'sparse')
+
+
 #%%
 
-""" ANIMATING SOLUTION """
+# """ ANIMATING SOLUTION """
 
-fig,ax = plt.subplots()
+# if bc_left.type == 'dirichlet':
+#     x = x[1:]
+# if bc_right.type == 'dirichlet':
+#     x = x[:-1] 
 
-line, = ax.plot(x[1:-1],u[:,0])
-ax.set_ylim(0,10)
-ax.set_xlim(grid.left,grid.right)
+# fig,ax = plt.subplots()
 
-def animate(i):
-    line.set_data((x[1:-1],u[:,i]))
-    return line,
+# line, = ax.plot(x,u[:,0])
+# ax.set_ylim(0,10)
+# ax.set_xlim(grid.left,grid.right)
 
-ani = FuncAnimation(fig, animate, frames=t_steps, interval=10, blit=True)
-plt.show()
+# def animate(i):
+#     line.set_data((x,u[:,i]))
+#     return line,
+
+# ani = FuncAnimation(fig, animate, frames=t_steps, interval=10, blit=True)
+# plt.show()
 
 
+# %%
 
+""" PLOTTING SOLUTION """
+
+fig = go.Figure(data=[go.Surface(z=u, x=x, y=np.arange(0,(t_steps+1)*dt,dt))])
+fig.update_layout(title='u(x,t)', autosize=False,
+                  scene=dict(
+        xaxis_title='t',
+        yaxis_title='x',
+        zaxis_title='u(x, t)'),
+                  width=500, height=500,
+                  margin=dict(l=65, r=50, b=65, t=90))
+fig.show()
 # %%
