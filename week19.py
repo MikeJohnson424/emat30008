@@ -154,9 +154,7 @@ def bratu(x):
 # %%
 
 t = None
-
 alpha = 5;beta = 10
-
 bc_left = BoundaryCondition('dirichlet', [lambda t: 5]);bc_right = BoundaryCondition('dirichlet',[lambda t: 10])
 grid = Grid(N=100, a=0, b=10)
 dx = grid.dx
@@ -176,12 +174,12 @@ plt.plot(grid.x[1:-1], u, 'o', markersize = 2)
 
 # %%
 
-""" TEST FOR NEW WAY OF SETTING UP BOUNDARY CONDITIONS"""
+""" ATTEMPT TO SOLVE BRATU EQUATION """
 
-grid = Grid(N=100, a=0, b=10)
-bc_left = BoundaryCondition('dirichlet', [lambda  t: np.sin(t)])
-bc_right = BoundaryCondition('dirichlet',[lambda t: 10])
-[A, b] = construct_A_and_b(grid,bc_left,bc_right)
+def bratu(u,t,parameters,grid,bc_left,bc_right):
 
-# %%
+    A,b = construct_A_and_b(grid,bc_left,bc_right)
+    mu = parameters[0]
 
+    
+    return D*np.matmul(A,u) + dx**2*np.exp(mu*u)

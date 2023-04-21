@@ -1,7 +1,7 @@
 #%%
 
 import numpy as  np
-from week19 import construct_A_and_b, BoundaryCondition, Grid
+from week19 import construct_A_and_b, BoundaryCondition, Grid, 
 from math import ceil
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -10,26 +10,29 @@ import matplotlib.animation as animation
 def implicit_diffusion_solver(grid,bc_left,bc_right,D,dt,t_steps):
 
     dx = grid.dx
+    x = grid.x
     C = dt*D/dx**2 
     dx = grid.dx # Grid spacing
     [A,b] = construct_A_and_b(grid,bc_left,bc_right) # Construct A and b matrices
-    u = np.zeros(len(A)) # Intialise u vector to zeros
+    u = np.sin(np.pi*x[1:-1]) # Intialise u vector to zeros
 
     for n in range(t_steps):
 
-        u_new = np.linalg.solve(np.eye(len(A))-C*A,u+np.dot(C,b)) # Solve for u(n+1) using implicit method
+        t = n*dt # Current time
+
+        u_new = np.linalg.solve(np.eye(len(A))-C*A,u+np.dot(C,b(t))) # Solve for u(n+1) using implicit method
         u = u_new # Update u vector
 
     return u
 
 # %%
 
-bc_left = BoundaryCondition('neumann', 2)
-bc_right = BoundaryCondition('dirichlet', 5)
-grid = Grid(N=10, a=0, b=10)
+bc_left = BoundaryCondition('dirichlet', [lambda x: 0])
+bc_right = BoundaryCondition('dirichlet', [lambda x: 0])
+grid = Grid(N=100, a=0, b=1)
 
-u = implicit_diffusion_solver(grid,bc_left,bc_right,D=1,dt=10,t_steps=10)
-plt.plot(grid.x[:-1],u, 'o', markersize = 2)
+u = implicit_diffusion_solver(grid,bc_left,bc_right,D=0.1,dt=20,t_steps=10)
+plt.plot(grid.x[1:-1],u, 'o', markersize = 2)
 
 # %%
 

@@ -89,30 +89,30 @@ def explicit_diffusion_solver(grid,bc_left,bc_right,IC,D,t_steps):
 
 
 grid = Grid(N=10,a = 0,b = 10)
-bc_left = BoundaryCondition('dirichlet',[lambda t: 0])
-bc_right = BoundaryCondition('neumann',[lambda t: 0])
-IC = InitialCondition(lambda x: 5-x**2)
+bc_left = BoundaryCondition('dirichlet',[lambda t: 10*np.sin(t)])
+bc_right = BoundaryCondition('dirichlet',[lambda t: 10])
+IC = InitialCondition(lambda x: 0)
 x = grid.x
 dx = grid.dx
 t_steps = 10000
 
 u = explicit_diffusion_solver(grid,bc_left,bc_right,IC,D=1,t_steps=t_steps)
 
-plt.plot(grid.x[1:],u[:,-1], 'o', markersize = 2)
+plt.plot(grid.x[1:-1],u[:,-1], 'o', markersize = 2)
 
 # %%
 """ ANIMATING SOLUTION """
 
 fig,ax = plt.subplots()
 
-line, = ax.plot(x[1:],u[:,0])
-ax.set_ylim(-20,100)
+line, = ax.plot(x[1:-1],u[:,0])
+ax.set_ylim(-20,20)
 ax.set_xlim(0,10)
 
 def animate(i):
-    line.set_data((x[1:],u[:,i]))
+    line.set_data((x[1:-1],u[:,i]))
     return line,
 
-ani = FuncAnimation(fig, animate, frames=t_steps, interval=100, blit=True)
+ani = FuncAnimation(fig, animate, frames=t_steps, interval=50, blit=True)
 plt.show()
 # %%
