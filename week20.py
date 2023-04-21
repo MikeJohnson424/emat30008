@@ -58,7 +58,7 @@ def explicit_diffusion_solver(grid,
     t_final = t_steps*dt # Final time
     u = np.zeros((len(grid.x),t_steps+1)) # Initialise array to store solutions
 
-    def du_dt(u,t,parameters): # Define temporal derivative of u
+    def du_dt(u,t,parameters): # Define explicit temporal derivative of u
         return D/dx**2*(np.matmul(A,u)+b(t)) + q(x,t,u)
     
     # Set initial condition
@@ -83,7 +83,7 @@ def explicit_diffusion_solver(grid,
 
     if method == 'lines':
     
-        u = solve_to(du_dt, u_old, t = t_final,parameters=[]).x
+        u = solve_to(du_dt, u_old, t = t_final,parameters=[],deltat_max=dt).x
 
     elif method == 'euler':
 
@@ -103,15 +103,15 @@ def explicit_diffusion_solver(grid,
 
 
 grid = Grid(N=10,a = 0,b = 1)
-bc_left = BoundaryCondition('dirichlet',[lambda t: 0])
-bc_right = BoundaryCondition('dirichlet',[lambda t: 0])
-IC = InitialCondition(lambda x: np.sin(np.pi*x))
 x = grid.x
+bc_left = BoundaryCondition('dirichlet',[lambda t: 5])
+bc_right = BoundaryCondition('dirichlet',[lambda t: 10])
+IC = InitialCondition(lambda x: np.zeros(len(x)))
 dx = grid.dx
 t_steps = 10000
 D=1
 
-u = explicit_diffusion_solver(grid,bc_left,bc_right,IC,D=1,t_steps=t_steps)
+u = explicit_diffusion_solver(grid,bc_left,bc_right,IC,D=1,t_steps=t_steps,method='lines')
 
 plt.plot(grid.x[1:-1],u[:,-1], 'o', markersize = 2)
 
@@ -122,7 +122,7 @@ plt.plot(grid.x[1:-1],u[:,-1], 'o', markersize = 2)
 fig,ax = plt.subplots()
 
 line, = ax.plot(x[1:-1],u[:,0])
-ax.set_ylim(0,1)
+ax.set_ylim(0,10)
 ax.set_xlim(0,1)
 
 def animate(i):

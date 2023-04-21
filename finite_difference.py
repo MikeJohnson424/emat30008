@@ -5,6 +5,9 @@ from math import floor
 import matplotlib.pyplot as plt
 import types
 from integrate import solve_to
+import scipy.sparse as sp
+import scipy
+from matplotlib.animation import FuncAnimation 
 
 def gen_diag_mat(N,entries):
 
@@ -13,10 +16,12 @@ def gen_diag_mat(N,entries):
 
     Parameters
     ----------
-    N : Integer
+    N : Int
         Size of matrix is NxN
     entries : Python list
         Entries to be placed on the diagonals of the matrix.
+    storage_type : String
+        Determines the storage type of the matrix. Can be 'dense' or 'sparse'.
 
     Returns
     -------
@@ -31,12 +36,28 @@ def gen_diag_mat(N,entries):
 
     for i in range(length):
         k[i] = entries[i]*np.ones(N - abs(diagonals[i])) # Fill the lists with the entries
-    mat = diags(k,diagonals).toarray() # Create the N-diagonal matrix
+    mat = sp.diags(k,diagonals).toarray()
 
     return mat
 
-def Grid(N = 10, a = 0, b = 1):
+def Grid(N=10,a=0,b=1):
 
+    """
+    A function that uses scipy.sparse.diags to generate a diagonal matrix
+
+    Parameters
+    ----------
+    N : Int
+        Size of matrix is NxN
+    entries : Python list
+        Entries to be placed on the diagonals of the matrix.
+    storage_type : String
+        Determines the storage type of the matrix. Can be 'dense' or 'sparse'.
+
+    Returns
+    -------
+    Returns a numpy matrix of size NxN with the entries placed on the diagonals.
+    """
     x = np.linspace(a,b,N+1)
     dx = (b-a)/N
 
@@ -96,7 +117,7 @@ def BoundaryCondition(bcon_type, value):
 
     return BC(bcon_type,value, A_entry)
 
-def construct_A_and_b(grid,bc_left,bc_right):
+def construct_A_and_b(grid,bc_left,bc_right,storage_type = 'dense'):
 
     x = grid.x # Domain of problem
     dx = grid.dx # Grid spacing
@@ -118,6 +139,9 @@ def construct_A_and_b(grid,bc_left,bc_right):
     if bc_right.type == 'dirichlet':
         A = A[:-1,:-1]
         b = b[:-1]
+
+    if storage_type == 'sparse': # Convert A matrix to sparse matrix
+        A = sp.csr_matrix(A)
 
     # Define function that returns b vector
 
@@ -146,9 +170,15 @@ def q(x,t,u):
 
     return np.zeros(len(x))
 
-def du_dt(u,t,parameters): # Define explicit temporal derivative of u
-        A,b,q,D,dx,x = parameters
-        return D/dx**2*(np.matmul(A,u)+b(t)) + q(x,t,u)
+def du_dt(u, t, parameters):  # Define explicit temporal derivative of u
+    A, b, q, D, dx, x = parameters
+    if isinstance(A, np.ndarray):  # Check if A is a dense matrix
+        return D / dx**2 * (np.dot(A, u) + b(t)) + q(x, t, u)
+    elif sp.issparse(A):  # Check if A is a sparse matrix
+        return D / dx**2 * (A.dot(u) + b(t)) + q(x, t, u)
+    else:
+        raise ValueError('Matrix A must be either dense (numpy.ndarray) or sparse (scipy.sparse)')
+
 
 def InitialCondition(initial_condition): 
 
@@ -185,35 +215,40 @@ def diffusion_solver(grid,
                     bc_left, 
                     bc_right,
                     IC,
+                    D,
                     q,
-                    D=0.1,
-                    dt=None,
+                    dt=10,
                     t_steps=20,
-                    method='IMEX'):
+                    method='implicit-euler',
+                    storage = 'dense'):
     
     """
     A function that iterates over a time-range using a chosen finite difference method
-    to solve for a solution u(x,t) to the diffusion equation.
+    to solve for the solution u(x,t) to a diffusive equation given dirichlet, neumann or robin boundary conditions.
 
     Parameters
     ----------
     grid: object
-        
+        Object returned by Grid function. Contains dx and x attributes.
     bc_left: object
-        
+        Object returned by BoundaryCondition function. Contains boundary condition type, value and A matrix entires.
     bc_right: object
-        
+        Object returned by BoundaryCondition function. Contains boundary condition type, value and A matrix entires.
     IC: object
-
-    q: function
-        Source term.
+        Object returned by InitialCondition function. Contains a function or float.
     D: float or int
         Diffusion coefficient
+    q: function(x,t,u)
+        Source term in reaction-diffusion equation.
     dt : float
-        Used in implicit method to determine time step size. Dt is recalculated for stability in explicit methods
+        Used in implicit method to determine time step size. (Input for dt not considered in explicit method as dt is
+        recalculated for stability).
     t_steps : int
         Number of time steps to iterate over.
     method : string
+        Finite difference method. Choose from "lines", "explicit-euler", "implicit-euler", "crank-nicolson", "IMEX".
+    storage : string
+        Choose 'dense' or 'sparse' to set how A matrix is stored in memory. Default is 'dense'.
     
     Returns
     -------
@@ -223,9 +258,22 @@ def diffusion_solver(grid,
     dx = grid.dx # Grid spacing
     x = grid.x # Array of grid points
     C = dt*D/dx**2 
-    [A,b] = construct_A_and_b(grid,bc_left,bc_right) # Construct A and b matrices
+    [A,b] = construct_A_and_b(grid,bc_left,bc_right,storage) # Construct A and b matrices
     u = np.zeros((len(grid.x),t_steps+1)) # Initialise array to store solutions
     t_final = dt*t_steps # Final time
+
+    # Adjust functions for solving matrix equations and generating identity matrix depending on storage type.
+
+    if storage == 'dense':
+        non_linear_solver = np.linalg.solve
+        gen_eye = np.eye
+        mat_mul = np.matmul
+    elif storage == 'sparse':
+        non_linear_solver = sp.linalg.spsolve
+        gen_eye = sp.eye
+        mat_mul = lambda A,b: A.dot(b)
+    else:
+        raise ValueError('Storage type must be "dense" or "sparse"')
 
     if method == 'explicit-euler' or 'lines':
         dt = 0.5*dx**2/D # Recalculate dt to ensure stability if a time-step restriction is present
@@ -240,11 +288,9 @@ def diffusion_solver(grid,
     # Remove rows from solution matrix if dirichlet boundary conditions are used
 
     if bc_left.type == 'dirichlet':
-        u = u[:-1] 
-        x = x[1:]
+        u = u[:-1]; x = x[1:]
     if bc_right.type == 'dirichlet':
-        u = u[1:]  
-        x = x[:-1] 
+        u = u[1:]; x = x[:-1] 
 
     u_old = u[:,0] # Set old solution as initial condition
 
@@ -260,14 +306,14 @@ def diffusion_solver(grid,
 
     elif method == 'lines':
 
-        u = solve_to(du_dt, u_old, t = t_final,parameters=[]).x
+        u = solve_to(du_dt, u_old, t = t_final,parameters=[A,b,q,D,dx,x],deltat_max = dt).x
 
     elif method == 'implicit-euler':
 
         for n in range(t_steps):
 
             t = n*dt # Current time
-            u_new = np.linalg.solve(np.eye(len(A))-C*A,
+            u_new = non_linear_solver(gen_eye(len(u_old))-C*A,
                                     u_old+C*b(t)) # Solve for u_n+1 using implicit method
             u_old = u_new # Update u vector
             u[:,n+1] = u_new # Store solution
@@ -277,8 +323,8 @@ def diffusion_solver(grid,
         for n in range(t_steps):
 
             t = n*dt # Current time
-            u_new = np.linalg.solve(np.eye(len(A))-C/2*A,
-                                    np.matmul((np.eye(len(A))+C/2*A),u_old)+np.dot(C,b(t)))
+            u_new = non_linear_solver(gen_eye(len(u_old))-C/2*A,
+                                    mat_mul((gen_eye(len(u_old))+C/2*A),u_old)+np.dot(C,b(t)))
             u_old = u_new # Update u vector
             u[:,n+1] = u_new # Store solution
 
@@ -290,8 +336,51 @@ def diffusion_solver(grid,
     
     return u
     
+
 #%%
 
+""" GENERATE SOLUTION """
+
+bc_left = BoundaryCondition('dirichlet', [lambda x: 5])
+bc_right = BoundaryCondition('dirichlet', [lambda x: 10])
+IC = InitialCondition(lambda x: np.sin(np.pi*x))
+grid = Grid(N=10, a=0, b=1)
+
+x = grid.x
+t_steps = 100
+storage = 'sparse'
+D=1
+dt = 0.1
+method = 'explicit-euler'
+
+
+u = diffusion_solver(grid,
+                    bc_left,
+                    bc_right,
+                    IC,
+                    D=0.1,
+                    q=q,
+                    dt=0.1,
+                    t_steps=t_steps,
+                    method='crank-nicolson',
+                    storage = 'sparse')
+#%%
+
+""" ANIMATING SOLUTION """
+
+fig,ax = plt.subplots()
+
+line, = ax.plot(x[1:-1],u[:,0])
+ax.set_ylim(0,10)
+ax.set_xlim(grid.left,grid.right)
+
+def animate(i):
+    line.set_data((x[1:-1],u[:,i]))
+    return line,
+
+ani = FuncAnimation(fig, animate, frames=t_steps, interval=10, blit=True)
+plt.show()
 
 
 
+# %%

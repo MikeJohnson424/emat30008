@@ -39,8 +39,6 @@ class Test_solve_to(unittest.TestCase):
         result = shooting.isolate_lim_cycle(PPM, [0.5 , 0.3 , 21])
         self.assertAlmostEqual(result.T, 20.8168665840617, places = 2)
         
-
-
 if __name__ == '__main__':
     unittest.main()
 

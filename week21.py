@@ -65,7 +65,7 @@ def implicit_diffusion_solver(grid,bc_left,bc_right,IC,D,dt,t_steps,method = 'eu
 
             t = n*dt # Current time
             u_new = np.linalg.solve(np.eye(len(A))-C*A,
-                                    u_old+C*b(t)+C*q(x,t,u_new)) 
+                                    u_old+C*b(t)+C*q(x,t,u_old)) 
             u_old = u_new # Update u vector
 
     return u_old
@@ -82,9 +82,9 @@ u = implicit_diffusion_solver(grid,
                               bc_right,
                               IC,
                               D=0.1,
-                              dt=20,
-                              t_steps=20,
+                              dt=0.01,
+                              t_steps=1000,
                               method='IMEX')
 plt.plot(grid.x[1:-1],u, 'o', markersize = 2)
-plt.ylim(0,1)
+plt.ylim(0,1000)
 # %%
