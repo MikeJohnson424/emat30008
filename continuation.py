@@ -1,4 +1,4 @@
-#%% 
+#%%
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,138 +6,129 @@ from shooting import shooting
 from scipy.optimize import fsolve,root
 from functions import PPM, h
 
+
 #%%
 
-def NP_continuation(func,x0=[-5],alpha0=-10,imax=1000,step_size = 0.01):
+def gen_sol_mat(x_dim,max_steps):
+    return np.zeros((x_dim+1,max_steps+1))
 
-    counter = 0 # Counter for the number of iterations
+def predictor(u_current,u_old):
+    delta_u = u_current - u_old
+    u_pred = u_current + delta_u
+    return [u_pred,delta_u]
 
-    x_new = x0
+def corrector(myode,u,u_pred,delta_u,vary_par,par0,discretisation=None):
 
-    x = np.zeros((len(x0),imax))
-    alpha = np.zeros(imax)
+    par0[vary_par] = u[-1]
 
-    alpha_new = alpha0
+    if discretisation == shooting:
+        R1 = shooting(myode,u[:-1],par0)
+        R2 = np.dot(u - u_pred, delta_u)
+    else:
+        R1 = myode(u[:-1],None,par0)
+        R2 = np.dot(u - u_pred, delta_u)
+    return np.hstack((R1,R2))
 
-    for i in range(imax):
+def find_initial_solutions(solver,myode,x0,par0,vary_par,step_size,discretisation):
 
-        alpha[counter] = alpha_new # Store the value of alpha
-
-        x_old = x_new 
-        alpha_old = alpha_new
-
-        x_new = fsolve(lambda x: func(x,alpha_new),x_old) # Solve for x
-        alpha_new = alpha_old + step_size # Update alpha
-
-        x[:,counter] = x_new # Store the value of x
-    
-        counter += 1
+    if discretisation == shooting: # Solve for limit cycle conditions
+        u_old = np.hstack((
+            solver(lambda x: shooting(myode,x,par0),x0).x,
+            par0[vary_par]
+        ))   
+        par0[vary_par] += step_size 
+        u_current = np.hstack((
+            solver(lambda x: shooting(myode,x,par0),u_old[:-1]).x,
+            par0[vary_par]
+            )) 
         
-    return [x, alpha]
-
-# %%
-""" == WORKING PSUEDO ARCLENGTH CONTINUATION FOR h(x,alpha) == """
-
-def g(func, u, u_pred, delta_u):
+    else: # Solve for equilibria
+        u_old = np.hstack((
+            solver(lambda x: myode(x,None,par0),x0).x,
+            par0[vary_par]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+        ))
+        par0[vary_par] += step_size
+        u_current = np.hstack((
+            solver(lambda x: myode(x,None,par0),u_old[:-1]).x,
+            par0[vary_par]
+        ))
     
-    x,alpha = u
-
-    top = func(x,alpha)
-    bottom = np.dot((u - u_pred),delta_u)
-
-    return np.array([top,bottom])
-
-def PA_continuation(func,x0,alpha0=[-5],imax=100, initial_step_size = 0.1): 
-
-    u = np.zeros((2,imax+1))
-
-    alpha0 = alpha0
-    x0 = fsolve(lambda x: func(x,alpha0),x0)
-    u_old = np.hstack((x0,alpha0))
-
-    u[:,0] = u_old
-
-    alpha1 = alpha0 + initial_step_size
-    x1 = fsolve(lambda x: func(x,alpha1),x0)
-    u_current = np.hstack((x1,alpha1))
-
-    counter = 1
-    
-    for i in range (imax):
-
-        u[:,counter] = u_current
-        
-        # Linear Predictor: 
-
-        delta_u = u_current - u_old
-        u_pred = u_current + delta_u
-
-        # Corrector:
-
-        u_true = fsolve(lambda u: g(func,u, u_pred, delta_u),u_current)
-
-        # Update Values
-
-        u_old = u_current
-        u_current = u_true
-        
-        counter +=1
-
-
-    return u
-
-# %%
-
-""" == PA CONTINUATION FOR ODEs == """
+    return [u_old,u_current]
 
 def continuation(myode,  # the ODE to use
     x0,  # the initial state
     par0,  # the initial parameters
-    vary_par=0,  # the parameter to vary
+    vary_par=0,  # the index of the parameter to vary
     step_size=0.1,  # the size of the steps to take
-    max_steps=10,  # the number of steps to take
-    discretisation=shooting,  # the discretisation to use
-    solver=fsolve):  # the solver to use
+    max_steps=50,  # the number of steps to take
+    discretisation=None,  # the discretisation to use
+    solver=root):  # the solver to use
+    
+    x_dim = len(x0) # Dimension of the solution
+    u = gen_sol_mat(x_dim,max_steps) # Initialise matrix to contain solution and varying parameter
 
-    # Initialise the arrays to store the results
+    u_old,u_current = find_initial_solutions(solver,myode,x0,par0,vary_par,step_size,discretisation)
 
-    u = np.zeros((len(x0)+1,max_steps+1))
+    u[:,0] = u_old # Store first solution
 
-    # Set the initial values
+    for n in range(max_steps):
 
-    u_old = np.hstack((solver(lambda x: discretisation(myode,x,par0),x0),par0[vary_par]))
-    par0[vary_par] += step_size
-    u_current = np.hstack((solver(lambda x: discretisation(myode,x,par0),x0),par0[vary_par]))
-    u[:,0] = u_old
-    counter = 1
+        u[:,n+1] = u_current
 
-    for i in range (max_steps):
+        # Predictor-Corrector
 
-        u[:,counter] = u_current
+        u_pred,delta_u = predictor(u_current,u_old)
+        u_true = solver(lambda u: 
+                        corrector(myode,u,u_pred,delta_u,vary_par,par0,discretisation),
+                          u_pred).x
         
-        # Linear Predictor: 
-
-        delta_u = u_current - u_old
-        u_pred = u_current + delta_u
-
-        # Corrector:
-
-        par0[vary_par] = u_pred[-1] # Update parameters
-        u_true = solver(lambda u: np.hstack((discretisation(myode, u[:-1], par0),
-                                            np.dot((u - u_pred),delta_u))),
-                                            u_current)
-
-        # Update Values
+        # Update values for next iteration
 
         u_old = u_current
         u_current = u_true
-        counter +=1
+        
 
-    return u  
+    return u
 
-u = continuation(PPM,[0.57,0.31,21],[1,0.2,0.1])
 
 # %%
 
-plt.plot(u[0,:],u[1,:])
+""" TEST FOR h(x) """
+
+y = np.linspace(-1.5,1.5,100)
+plt.plot(y-y**3,y)
+
+u = continuation(h,x0 = [1],par0 = [-2],
+                   vary_par = 0,
+                   step_size = 0.1,
+                   max_steps = 50)
+plt.plot(u[-1],u[0])
+
+#%%
+
+""" TEST FOR PPM """
+
+u = continuation(PPM,x0 = [0.5,0.3],par0 = [0.5,0.2,0.1],
+                   vary_par = 0,
+                   step_size = 0.1,
+                   max_steps = 50)
+plt.plot(u[-1],u[0])
+
+# %%
+
+myode = PPM; x0 = [5,6]; par0 = [0.5,0.2,0.1]; vary_par = 0; step_size = 0.1; max_steps = 40; solver = root
+#myode = h;x0 = [1];par0 = [-2];vary_par = 0;step_size = 0.1;max_steps = 50;solver = root
+
+# %%
+
+""" TEST FOR SHOOTING """
+
+u = continuation(PPM,x0 = [0.5,0.5,20],par0 = [1,0.1,0.1],
+                   vary_par = 0,
+                   step_size = 0.1,
+                   max_steps = 20,
+                   discretisation = shooting)
+plt.plot(u[-1],u[0])
+
+
 # %%
