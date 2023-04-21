@@ -147,9 +147,6 @@ def q(x):
 
     return np.ones(len(x))
 
-def bratu(x):
-    
-        return np.exp(x)
 
 # %%
 

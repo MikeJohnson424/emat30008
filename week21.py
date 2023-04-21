@@ -65,7 +65,7 @@ def implicit_diffusion_solver(grid,bc_left,bc_right,IC,D,dt,t_steps,method = 'eu
 
             t = n*dt # Current time
             u_new = np.linalg.solve(np.eye(len(A))-C*A,
-                                    u_old+C*b(t)+q(x,t,u_old)) 
+                                    u_old+C*b(t)+C*q(x,t,u_new)) 
             u_old = u_new # Update u vector
 
     return u_old

@@ -9,11 +9,8 @@ import types
 from integrate import solve_to
 
 def q(x,t,u):
-    
-    array_size = len(x)
-    t = np.full((array_size,1),t).flatten()
 
-    return np.zeros(array_size)
+    return np.zeros(len(x))
 
 def InitialCondition(initial_condition): 
 
@@ -46,7 +43,13 @@ def InitialCondition(initial_condition):
 
     return IC(IC_type,initial_condition)
 
-def explicit_diffusion_solver(grid,bc_left,bc_right,IC,D,t_steps,method = 'euler'):
+def explicit_diffusion_solver(grid,
+                              bc_left,
+                              bc_right,
+                              IC,
+                              D,
+                              t_steps,
+                              method = 'euler'):
 
     dx = grid.dx # Grid spacing
     x = grid.x
@@ -55,9 +58,9 @@ def explicit_diffusion_solver(grid,bc_left,bc_right,IC,D,t_steps,method = 'euler
     t_final = t_steps*dt # Final time
     u = np.zeros((len(grid.x),t_steps+1)) # Initialise array to store solutions
 
-    def du_dt(u,t,parameters): # Define function to be integrated
+    def du_dt(u,t,parameters): # Define temporal derivative of u
         return D/dx**2*(np.matmul(A,u)+b(t)) + q(x,t,u)
-
+    
     # Set initial condition
 
     if IC.IC_type == 'function':
@@ -65,7 +68,7 @@ def explicit_diffusion_solver(grid,bc_left,bc_right,IC,D,t_steps,method = 'euler
     if IC.IC_type == 'constant':
         u[:,0] = IC.initial_condition*np.ones(len(grid.x)) # Set initial condition
 
-    # Remove rows from solution matrix if dirichlet boundary conditions are used
+    # Remove rows from solution matrix and domain, x, if dirichlet boundary conditions are used
 
     if bc_left.type == 'dirichlet':
         u = u[:-1] 
@@ -88,9 +91,8 @@ def explicit_diffusion_solver(grid,bc_left,bc_right,IC,D,t_steps,method = 'euler
 
             dt = 0.5*dx**2/D # Recalculate dt to ensure stability
             t = dt*n # Current time
-
-            u_new = u_old + dt*D/dx**2*(np.matmul(A,u_old)+b(t)) + dt*q(x,t,u_old) # Time march solution
-            u_old = u_new
+            u_new = u_old +dt*du_dt(u_old,t,parameters=[]) # Time march solution
+            u_old = u_new # Update old solution
 
             u[:,n+1] = u_new # Store solution
         
@@ -100,26 +102,28 @@ def explicit_diffusion_solver(grid,bc_left,bc_right,IC,D,t_steps,method = 'euler
 #%%
 
 
-grid = Grid(N=10,a = 0,b = 10)
-bc_left = BoundaryCondition('dirichlet',[lambda t: 10*np.sin(t)])
-bc_right = BoundaryCondition('dirichlet',[lambda t: 10])
-IC = InitialCondition(lambda x: 0)
+grid = Grid(N=10,a = 0,b = 1)
+bc_left = BoundaryCondition('dirichlet',[lambda t: 0])
+bc_right = BoundaryCondition('dirichlet',[lambda t: 0])
+IC = InitialCondition(lambda x: np.sin(np.pi*x))
 x = grid.x
 dx = grid.dx
 t_steps = 10000
+D=1
 
 u = explicit_diffusion_solver(grid,bc_left,bc_right,IC,D=1,t_steps=t_steps)
 
 plt.plot(grid.x[1:-1],u[:,-1], 'o', markersize = 2)
 
 # %%
+
 """ ANIMATING SOLUTION """
 
 fig,ax = plt.subplots()
 
 line, = ax.plot(x[1:-1],u[:,0])
-ax.set_ylim(-20,20)
-ax.set_xlim(0,10)
+ax.set_ylim(0,1)
+ax.set_xlim(0,1)
 
 def animate(i):
     line.set_data((x[1:-1],u[:,i]))
