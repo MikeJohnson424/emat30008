@@ -347,5 +347,11 @@ def diffusion_solver(grid,
     else:
         raise ValueError('Method not recognised.')
     
-    return u
+    class result:
+        def __init__(self,u,x,t):
+            self.u = u
+            self.x = x
+            self.t = t
+
+    return result(u,x,np.arange(0,t_final,dt))
 

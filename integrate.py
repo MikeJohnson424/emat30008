@@ -129,6 +129,5 @@ result = solve_to(func = f,x0 = [1],t=0.4,parameters = [], deltat_max = 0.0001, 
 #plt.plot(result.t_space,result.x[0])
 #print(result.x[0,-1])
 
-#print('e ~ ' + str(result.x[0,-1]))
 
 # %%
