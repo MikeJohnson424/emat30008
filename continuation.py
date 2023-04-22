@@ -120,14 +120,14 @@ myode = PPM; x0 = [5,6]; par0 = [0.5,0.2,0.1]; vary_par = 0; step_size = 0.1; ma
 
 # %%
 
-""" TEST FOR LIMIT CYCLES """
+# """ TEST FOR LIMIT CYCLES """
 
-u = continuation(PPM,x0 = [0.5,0.5,20],par0 = [1,0.1,0.1],
-                   vary_par = 0,
-                   step_size = 0.1,
-                   max_steps = 20,
-                   solve_for = 'limit_cycle')
-plt.plot(u[-1],u[0])
+# u = continuation(PPM,x0 = [0.5,0.5,20],par0 = [1,0.1,0.1],
+#                    vary_par = 0,
+#                    step_size = 0.1,
+#                    max_steps = 20,
+#                    solve_for = 'limit_cycle')
+# plt.plot(u[-1],u[0])
 
 
 # %%

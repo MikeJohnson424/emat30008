@@ -6,6 +6,8 @@ from math import floor
 import matplotlib.pyplot as plt
 from functions import sol_no_source, sol_source
 import types
+from continuation import continuation
+from scipy.optimize import root
 
 def gen_diag_mat(N,entries):
 
@@ -171,12 +173,28 @@ plt.plot(grid.x[1:-1], u, 'o', markersize = 2)
 
 # %%
 
-""" ATTEMPT TO SOLVE BRATU EQUATION """
+""" VARY PARAMETERS IN BRATU PROBLEM """
 
-def bratu(u,t,parameters,grid,bc_left,bc_right):
+grid = Grid(N=100, a=0, b=10)
+bc_left = BoundaryCondition('dirichlet', [lambda t: 5]);bc_right = BoundaryCondition('dirichlet',[lambda t: 10])
+A,b = construct_A_and_b(grid,bc_left,bc_right)
+dx = grid.dx
 
-    A,b = construct_A_and_b(grid,bc_left,bc_right)
-    mu = parameters[0]
+def bratu(u,t,parameters):
 
+    mu,D,dx = parameters
     
     return D*np.matmul(A,u) + dx**2*np.exp(mu*u)
+
+u0 = np.zeros(len(grid.x[1:-1]))
+
+u = continuation(bratu,  # the ODE to use
+    x0 = u0,  # the initial state
+    par0=[0,1,dx],  # the initial parameters
+    vary_par=0,  # the index of the parameter to vary
+    step_size=0.001,  # the size of the steps to take
+    max_steps=1000,  # the number of steps to take
+    solve_for = 'equilibria', # 'equilibria' or 'limit cycle'
+    solver=root)
+plt.plot(u[-1],u[0])
+# %%

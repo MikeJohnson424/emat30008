@@ -8,7 +8,8 @@ from integrate import solve_to
 import scipy.sparse as sp
 from matplotlib.animation import FuncAnimation 
 import plotly.graph_objects as go
-import sympy
+import inspect
+from scipy.integrate import solve_ivp
 
 def gen_diag_mat(N,entries):
 
@@ -196,7 +197,9 @@ def construct_A_and_b(grid,bc_left,bc_right,storage_type = 'dense'):
     return [A, b_func]
 
 def du_dt(u, t, parameters):  # Define explicit temporal derivative of u
+
     A, b, q, D, dx, x = parameters
+
     if isinstance(A, np.ndarray):  # Check if A is a dense matrix
         return D / dx**2 * (np.dot(A, u) + b(t)) + q(x, t, u)
     elif sp.issparse(A):  # Check if A is a sparse matrix
@@ -255,6 +258,9 @@ def diffusion_solver(grid,
     u = np.zeros((len(grid.x),t_steps+1)) # Initialise array to store solutions
     t_final = dt*t_steps # Final time
 
+    if t_final != int or t_final <= 0: # Check if t_final is a positive integer
+        raise TypeError('t_final must be a positive integer.')
+
     # Account for different types of source term
     
     if type(q) in (float,int):
@@ -266,7 +272,7 @@ def diffusion_solver(grid,
     
     # Check if method conflicts with source term
 
-    if q(1,2,3) != q(1,2,4) and method in ('implicit-euler','crank-nicolson'):
+    if q(1,1,1) != q(1,1,0) and method in ('implicit-euler','crank-nicolson'):
         raise Exception('Non-linear source terms cannot be used with chosen method.')
 
     # Adjust functions for solving matrix equations, generating identity matrix and matrix multiplication depending on storage type.
@@ -341,7 +347,7 @@ def diffusion_solver(grid,
         pass
 
     else:
-        raise ValueError('Method not recognised')
+        raise ValueError('Method not recognised.')
     
     return u
     
@@ -357,8 +363,8 @@ dt = 0.1
 method = 'crank-nicolson'
 
 grid = Grid(N=100, a=0, b=1)
-bc_left = BoundaryCondition('dirichlet', [lambda t: 0],grid)
-bc_right = BoundaryCondition('dirichlet', [lambda t: 0],grid)
+bc_left = BoundaryCondition('dirichlet', [lambda t: 0], grid)
+bc_right = BoundaryCondition('dirichlet', [lambda t: 0], grid)
 x = grid.x
 q = 1
 IC = 0
@@ -369,7 +375,7 @@ u = diffusion_solver(grid,
                     bc_right,
                     IC = 0,
                     D=0.1,
-                    q=lambda x,t,u: 1,
+                    q=1,
                     dt=0.1,
                     t_steps=t_steps,
                     method='crank-nicolson',
