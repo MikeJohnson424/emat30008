@@ -8,6 +8,7 @@ from integrate import solve_to
 import scipy.sparse as sp
 from matplotlib.animation import FuncAnimation 
 import plotly.graph_objects as go
+import sympy
 
 def gen_diag_mat(N,entries):
 
@@ -194,10 +195,6 @@ def construct_A_and_b(grid,bc_left,bc_right,storage_type = 'dense'):
 
     return [A, b_func]
 
-def q(x,t,u):
-
-    return 0
-
 def du_dt(u, t, parameters):  # Define explicit temporal derivative of u
     A, b, q, D, dx, x = parameters
     if isinstance(A, np.ndarray):  # Check if A is a dense matrix
@@ -206,37 +203,6 @@ def du_dt(u, t, parameters):  # Define explicit temporal derivative of u
         return D / dx**2 * (A.dot(u) + b(t)) + q(x, t, u)
     else:
         raise ValueError('Matrix A must be either dense (numpy.ndarray) or sparse (scipy.sparse)')
-
-def InitialCondition(initial_condition): 
-
-    """
-    A function that defines attributes of a chosen initial condition
-
-    Parameters
-    ----------
-    initial_condition : Can be a function or a constant. If function then use lambda anonymous functions.
-    
-    Returns
-    -------
-    Returns a class containing a string specifying the nature of the intiial condition, and the initial condition itself.
-    """
-
-    if isinstance(initial_condition, types.FunctionType):
-        IC_type = 'function'
-
-    elif type(initial_condition) == float or type(initial_condition) == int:
-        IC_type = 'constant'
-
-    else:
-        raise ValueError('Initial condition must be a function or a constant')
-
-    class IC:
-        def __init__(self,IC_type,initial_condition):
-            self.IC_type = IC_type
-            self.initial_condition = initial_condition
-            
-
-    return IC(IC_type,initial_condition)
 
 def diffusion_solver(grid, 
                     bc_left, 
@@ -261,11 +227,11 @@ def diffusion_solver(grid,
         Object returned by BoundaryCondition function. Contains boundary condition type, value and A matrix entires.
     bc_right: object
         Object returned by BoundaryCondition function. Contains boundary condition type, value and A matrix entires.
-    IC: object
-        Object returned by InitialCondition function. Contains a function or float.
+    IC: Float, int or function
+        Defines domain, x, at time t = 0.
     D: float or int
         Diffusion coefficient
-    q: function(x,t,u)
+    q: float, int or function q = q(x,t,u)
         Source term in reaction-diffusion equation.
     dt : float
         Used in implicit method to determine time step size. (Input for dt not considered in explicit method as dt is
@@ -289,8 +255,21 @@ def diffusion_solver(grid,
     u = np.zeros((len(grid.x),t_steps+1)) # Initialise array to store solutions
     t_final = dt*t_steps # Final time
 
-    # Adjust functions for solving matrix equations, generating identity matrix and
-    # matrix multiplication depending on storage type.
+    # Account for different types of source term
+    
+    if type(q) in (float,int):
+        q = (lambda value: lambda x, t, u: value)(q)
+    elif isinstance(q,types.FunctionType):
+        pass
+    else:
+        raise TypeError('q must be a float, integer or some function q(x,t,u)')
+    
+    # Check if method conflicts with source term
+
+    if q(1,2,3) != q(1,2,4) and method in ('implicit-euler','crank-nicolson'):
+        raise Exception('Non-linear source terms cannot be used with chosen method.')
+
+    # Adjust functions for solving matrix equations, generating identity matrix and matrix multiplication depending on storage type.
 
     if storage == 'dense':
         non_linear_solver = np.linalg.solve
@@ -310,10 +289,10 @@ def diffusion_solver(grid,
 
     if isinstance(IC,types.FunctionType):
         u[:,0] = IC(x)
-    elif type(IC) == float or int:
+    elif type(IC) in (float,int):
         u[:,0] = IC*np.ones(len(grid.x))
     else:
-        raise ValueError('Initial condition must be a function or constant')
+        raise TypeError('Initial condition must be some function f(x) or constant')
 
     # Remove rows from solution matrix if dirichlet boundary conditions are used
 
@@ -332,7 +311,7 @@ def diffusion_solver(grid,
 
             dt = 0.5*dx**2/D # Recalculate dt to ensure stability
             t = dt*n # Current time
-            U = U +dt*du_dt(U,t,[A,b,q,D,dx,x]) # Time march solution
+            U = U + dt*D/dx**2*(mat_mul(A,b)+b(t))+dt*q(x,t,u) # Time march solution
             u[:,n+1] = U # Store solution
 
     elif method == 'lines':
@@ -343,18 +322,19 @@ def diffusion_solver(grid,
 
         for n in range(t_steps):
 
-            t = n*dt # Current time
+            t = n*dt+dt # Time at next time-level
             U = non_linear_solver(gen_eye(len(U))-C*A,
-                                    U+C*b(t)) # Solve for u_n+1 using implicit method
+                                    U+C*b(t)+q(x,t,None)) # Solve for u_n+1 using implicit method
             u[:,n+1] = U # Store solution
 
     elif method == 'crank-nicolson':
 
         for n in range(t_steps):
 
-            t = n*dt # Current time
-            U = non_linear_solver(gen_eye(len(U))-C/2*A,
-                                    mat_mul((gen_eye(len(U))+C/2*A),U)+np.dot(C,b(t)))
+            t_current = n*dt # Current time
+            t_next = t_current + dt            
+            U = non_linear_solver(gen_eye(len(U)-C/2*A),
+                                  mat_mul((gen_eye(len(U))+C/2*A),U) + C/2*(b(t_current)+b(t_next)) + dt/2*(q(x,t_current,None)+q(x,t_next,None)))
             u[:,n+1] = U # Store solution
 
     elif method == 'IMEX':
@@ -374,25 +354,26 @@ t_steps = 100
 storage = 'sparse'
 D=1
 dt = 0.1
-method = 'explicit-euler'
+method = 'crank-nicolson'
 
 grid = Grid(N=100, a=0, b=1)
 bc_left = BoundaryCondition('dirichlet', [lambda t: 0],grid)
 bc_right = BoundaryCondition('dirichlet', [lambda t: 0],grid)
-IC = InitialCondition(lambda x: 0)
 x = grid.x
+q = 1
+IC = 0
 
 
 u = diffusion_solver(grid,
                     bc_left,
                     bc_right,
-                    IC = 5,
+                    IC = 0,
                     D=0.1,
-                    q=q,#lambda x,t,u: x*2+2*np.sin(u),
-                    dt=0.001,
+                    q=lambda x,t,u: 1,
+                    dt=0.1,
                     t_steps=t_steps,
-                    method='implicit-euler',
-                    storage = 'sparse')
+                    method='crank-nicolson',
+                    storage = 'dense')
 
 
 #%%
@@ -407,36 +388,36 @@ if bc_right.type == 'dirichlet':
 fig,ax = plt.subplots()
 
 line, = ax.plot(x,u[:,0])
-ax.set_ylim(0,10)
+ax.set_ylim(0,1)
 ax.set_xlim(grid.left,grid.right)
 
 def animate(i):
     line.set_data((x,u[:,i]))
     return line,
 
-ani = FuncAnimation(fig, animate, frames=t_steps, interval=10, blit=True)
+ani = FuncAnimation(fig, animate, frames=t_steps, interval=1, blit=True)
 plt.show()
 
 
 # %%
 
-# """ PLOT SOLUTION AS 3D SURFACE """
+""" PLOT SOLUTION AS 3D SURFACE """
 
-# t_values = np.arange(0, (t_steps + 1) * dt, dt)
-# fig = go.Figure(data=[go.Surface(z=u, x=t_values, y=x)])
+t_values = np.arange(0, (t_steps + 1) * dt, dt)
+fig = go.Figure(data=[go.Surface(z=u, x=t_values, y=x)])
 
-# fig.update_layout(
-#     title='u(x,t)',
-#     autosize=False,
-#     scene=dict(
-#         xaxis=dict(range=[0, 3]),
-#         xaxis_title='t',
-#         yaxis_title='x',
-#         zaxis_title='u(x, t)'),
-#     width=500,
-#     height=500,
-#     margin=dict(l=65, r=50, b=65, t=90)
-# )
+fig.update_layout(
+    title='u(x,t)',
+    autosize=False,
+    scene=dict(
+        xaxis=dict(range=[0, 3]),
+        xaxis_title='t',
+        yaxis_title='x',
+        zaxis_title='u(x, t)'),
+    width=500,
+    height=500,
+    margin=dict(l=65, r=50, b=65, t=90)
+)
 
-# fig.show()
+fig.show()
 # %%
