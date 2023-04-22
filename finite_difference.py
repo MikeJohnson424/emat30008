@@ -129,6 +129,24 @@ def BoundaryCondition(bcon_type, value,grid):
 
 def construct_A_and_b(grid,bc_left,bc_right,storage_type = 'dense'):
 
+    """
+    A function that builds the A and b matrix depending on set boundary conditions
+
+    Parameters
+    ----------
+    grid : Obj
+        Contains discretized array,x and grid spacing dx.
+    bc_left: Obj
+        Object returned by BoundaryCondition function. Contains boundary condition type, value and A matrix entires.
+    bc_right: Obj
+        Object returned by BoundaryCondition function. Contains boundary condition type, value and A matrix entires.
+    storage_type: Str
+        Choose from dense or sparse to determine the nature of the A matrix.
+    Returns
+    -------
+    Returns matrix A and function b_func. b_func is a function of time and defines the matrix b for a given time input.
+    """
+
     x = grid.x # Domain of problem
     dx = grid.dx # Grid spacing
     N = len(x)-1 
@@ -290,10 +308,12 @@ def diffusion_solver(grid,
 
     # Set initial condition
 
-    if IC.IC_type == 'function':
-         u[:,0] = IC.initial_condition(x) # Set initial condition
-    if IC.IC_type == 'constant':
-        u[:,0] = IC.initial_condition*np.ones(len(grid.x)) # Set initial condition
+    if isinstance(IC,types.FunctionType):
+        u[:,0] = IC(x)
+    elif type(IC) == float or int:
+        u[:,0] = IC*np.ones(len(grid.x))
+    else:
+        raise ValueError('Initial condition must be a function or constant')
 
     # Remove rows from solution matrix if dirichlet boundary conditions are used
 
@@ -350,66 +370,73 @@ def diffusion_solver(grid,
 
 """ GENERATE SOLUTION """
 
-grid = Grid(N=10, a=0, b=1)
-bc_left = BoundaryCondition('dirichlet', [lambda t: 0],grid)
-bc_right = BoundaryCondition('dirichlet', [lambda t: 0],grid)
-IC = InitialCondition(lambda x: 10*np.sin(np.pi*x))
-
-
-x = grid.x
-t_steps = 1000
+t_steps = 100
 storage = 'sparse'
 D=1
 dt = 0.1
 method = 'explicit-euler'
 
+grid = Grid(N=100, a=0, b=1)
+bc_left = BoundaryCondition('dirichlet', [lambda t: 0],grid)
+bc_right = BoundaryCondition('dirichlet', [lambda t: 0],grid)
+IC = InitialCondition(lambda x: 0)
+x = grid.x
+
 
 u = diffusion_solver(grid,
                     bc_left,
                     bc_right,
-                    IC,
+                    IC = 5,
                     D=0.1,
-                    q=q,
-                    dt=0.1,
+                    q=q,#lambda x,t,u: x*2+2*np.sin(u),
+                    dt=0.001,
                     t_steps=t_steps,
-                    method='crank-nicolson',
+                    method='implicit-euler',
                     storage = 'sparse')
 
 
 #%%
 
-# """ ANIMATING SOLUTION """
+""" ANIMATING SOLUTION """
 
-# if bc_left.type == 'dirichlet':
-#     x = x[1:]
-# if bc_right.type == 'dirichlet':
-#     x = x[:-1] 
+if bc_left.type == 'dirichlet':
+    x = x[1:]
+if bc_right.type == 'dirichlet':
+    x = x[:-1] 
 
-# fig,ax = plt.subplots()
+fig,ax = plt.subplots()
 
-# line, = ax.plot(x,u[:,0])
-# ax.set_ylim(0,10)
-# ax.set_xlim(grid.left,grid.right)
+line, = ax.plot(x,u[:,0])
+ax.set_ylim(0,10)
+ax.set_xlim(grid.left,grid.right)
 
-# def animate(i):
-#     line.set_data((x,u[:,i]))
-#     return line,
+def animate(i):
+    line.set_data((x,u[:,i]))
+    return line,
 
-# ani = FuncAnimation(fig, animate, frames=t_steps, interval=10, blit=True)
-# plt.show()
+ani = FuncAnimation(fig, animate, frames=t_steps, interval=10, blit=True)
+plt.show()
 
 
 # %%
 
-""" PLOT SOLUTION AS 3D SURFACE """
+# """ PLOT SOLUTION AS 3D SURFACE """
 
-fig = go.Figure(data=[go.Surface(z=u, x=x, y=np.arange(0,(t_steps+1)*dt,dt))])
-fig.update_layout(title='u(x,t)', autosize=False,
-                  scene=dict(
-        xaxis_title='t',
-        yaxis_title='x',
-        zaxis_title='u(x, t)'),
-                  width=1000, height=500,
-                  margin=dict(l=65, r=50, b=65, t=90))
-fig.show()
+# t_values = np.arange(0, (t_steps + 1) * dt, dt)
+# fig = go.Figure(data=[go.Surface(z=u, x=t_values, y=x)])
+
+# fig.update_layout(
+#     title='u(x,t)',
+#     autosize=False,
+#     scene=dict(
+#         xaxis=dict(range=[0, 3]),
+#         xaxis_title='t',
+#         yaxis_title='x',
+#         zaxis_title='u(x, t)'),
+#     width=500,
+#     height=500,
+#     margin=dict(l=65, r=50, b=65, t=90)
+# )
+
+# fig.show()
 # %%
