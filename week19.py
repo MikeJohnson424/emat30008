@@ -8,35 +8,8 @@ from functions import sol_no_source, sol_source
 import types
 from continuation import continuation
 from scipy.optimize import root
-
-def gen_diag_mat(N,entries):
-
-    """
-    A function that uses scipy.sparse.diags to generate a diagonal matrix
-
-    Parameters
-    ----------
-    N : Integer
-        Size of matrix is NxN
-    entries : Python list
-        Entries to be placed on the diagonals of the matrix.
-
-    Returns
-    -------
-    Returns a numpy matrix of size NxN with the entries placed on the diagonals.
-    """
-
-    length = len(entries) # Number of diagonals
-    lim = floor(length/2) # +/- limits of diagonals
-    diagonals = range(-lim,lim+1) # Which diagonals to put the entries in
-
-    k = [[] for _ in range(length)] # Create a list of empty lists
-
-    for i in range(length):
-        k[i] = entries[i]*np.ones(N - abs(diagonals[i])) # Fill the lists with the entries
-    mat = diags(k,diagonals).toarray() # Create the N-diagonal matrix
-
-    return mat
+from functions import bratu
+from finite_difference import gen_diag_mat
 
 def Grid(N = 10, a = 0, b = 1):
 
@@ -173,28 +146,3 @@ plt.plot(grid.x[1:-1], u, 'o', markersize = 2)
 
 # %%
 
-""" VARY PARAMETERS IN BRATU PROBLEM """
-
-grid = Grid(N=100, a=0, b=10)
-bc_left = BoundaryCondition('dirichlet', [lambda t: 5]);bc_right = BoundaryCondition('dirichlet',[lambda t: 10])
-A,b = construct_A_and_b(grid,bc_left,bc_right)
-dx = grid.dx
-
-def bratu(u,t,parameters):
-
-    mu,D,dx = parameters
-    
-    return D*np.matmul(A,u) + dx**2*np.exp(mu*u)
-
-u0 = np.zeros(len(grid.x[1:-1]))
-
-u = continuation(bratu,  # the ODE to use
-    x0 = u0,  # the initial state
-    par0=[0,1,dx],  # the initial parameters
-    vary_par=0,  # the index of the parameter to vary
-    step_size=0.001,  # the size of the steps to take
-    max_steps=1000,  # the number of steps to take
-    solve_for = 'equilibria', # 'equilibria' or 'limit cycle'
-    solver=root)
-plt.plot(u[-1],u[0])
-# %%

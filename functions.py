@@ -74,6 +74,12 @@ def sol_no_source(x,a,b,alpha,beta): # True solution to week 19 question 1
 
     return ((beta-alpha))/(b-a)*(x-a)+alpha
 
+def bratu(u,t,parameters):
+
+    mu,D,dx,A = parameters
+    
+    return D*np.matmul(A,u) + dx**2*np.exp(mu*u)
+
 
 
 

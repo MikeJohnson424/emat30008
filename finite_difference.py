@@ -353,5 +353,7 @@ def diffusion_solver(grid,
             self.x = x
             self.t = t
 
-    return result(u,x,np.arange(0,t_final,dt))
+    return result(u,x,np.linspace(0,t_final,t_steps+1))
 
+
+# %%
