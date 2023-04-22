@@ -10,14 +10,70 @@ from functions import PPM, h
 #%%
 
 def gen_sol_mat(x_dim,max_steps):
+
+    """
+    A function for generating solution storage array as part of continuation.
+
+    Parameters
+    ----------
+    x_dim: int
+        
+    max_steps: int
+        
+    Returns
+    -------
+    Returns a ndarray of zeros with dimensions (x_dim+1,max_steps+1) where x_dim is the dimension of the solution and max_steps is the number of steps to take.
+    """
     return np.zeros((x_dim+1,max_steps+1))
 
 def predictor(u_current,u_old):
+
+    """
+    A function for performing the predictor step of pseudo-arclength continuation.
+
+    Parameters
+    ----------
+    u_current: ndarray
+        Array containing the current solution and the current value of the parameter being varied.
+    u_old: ndarray
+        Array containing the previous solution and the previous value of the parameter being varied.
+    Returns
+    -------
+    u_pred: ndarray
+        Array containing the predicted solution and the predicted value of the parameter being varied.
+    delta_u: ndarray
+        Array containing the difference between the current and previous solutions and the difference between the current and previous values of the parameter being varied.
+    """
+
     delta_u = u_current - u_old
     u_pred = u_current + delta_u
     return [u_pred,delta_u]
 
-def corrector(myode,u,u_pred,delta_u,vary_par,par0,solve_for=None):
+def corrector(myode,u,u_pred,delta_u,vary_par,par0,solve_for):
+
+    """
+    A function to solve as part of the corrector stage of pseudo-arclength continuation.
+
+    Parameters
+    ----------
+    my_ode: function
+        Function to perform continuation on.
+    u: ndarray
+        The variable to solve for as part of the corrector stage.
+    u_pred: ndarray
+        The predicted solution and the predicted value of the parameter being varied.
+    delta_u: ndarray
+        The difference between the current and previous solutions and the difference between the current and previous values of the parameter being varied.
+    vary_par: int
+        The index of the parameter being varied.
+    par0: ndarray
+        The array of parameters.
+    solve_for: str
+        Choose from 'equilibria' or 'limit_cycle'. If 'equilibria' is chosen, the function will solve for equilibria. If 'limit_cycle' is chosen, the function will solve for limit cycle conditions.
+    Returns
+    -------
+    Returns a ndarray containing output of my_ode and the dot product between (u-u_pred) and delta_u given array u.
+    """
 
     par0[vary_par] = u[-1]
 
@@ -30,6 +86,33 @@ def corrector(myode,u,u_pred,delta_u,vary_par,par0,solve_for=None):
     return np.hstack((R1,R2))
 
 def find_initial_solutions(solver,myode,x0,par0,vary_par,step_size,solve_for):
+
+    """
+    A function for generating two initial solutions to be used in pseudo-arclength continuation.
+
+    Parameters
+    ----------
+    solver: function
+        The solver to use. Code currently only support scipy.optimize.root.
+    my_ode: function
+        Function to perform continuation on.
+    x0: ndarray
+        The initial state.
+    par0: ndarray
+        The array of parameters.
+    vary_par: int
+        The index of the parameter being varied.
+    step_size: float
+        The size of the step to take.
+    solve_for: str
+        Choose from 'equilibria' or 'limit_cycle'. If 'equilibria' is chosen, the function will solve for equilibria. If 'limit_cycle' is chosen, the function will solve for limit cycle conditions.
+    Returns
+    -------
+    u_old: ndarray
+        First solution.
+    u_current: ndarray
+        Second solution.
+    """
 
     if solve_for == 'limit_cycle': # Solve for limit cycle conditions using shooting method
         u_old = np.hstack((
@@ -55,15 +138,37 @@ def find_initial_solutions(solver,myode,x0,par0,vary_par,step_size,solve_for):
     
     return [u_old,u_current]
 
-def continuation(myode,  # the ODE to use
-    x0,  # the initial state
-    par0,  # the initial parameters
-    vary_par=0,  # the index of the parameter to vary
-    step_size=0.1,  # the size of the steps to take
-    max_steps=50,  # the number of steps to take
-    solve_for = 'equilibria', # 'equilibria' or 'limit cycle'
-    solver=root):  # the solver to use
+def continuation(myode,x0,par0,vary_par=0,step_size=0.1,max_steps=50,solve_for = 'equilibria', method='pseudo-arclength',solver=root):
     
+    """
+    A function for performing continuation.
+
+    Parameters
+    ----------
+    my_ode: function
+        Function to perform continuation on.
+    x0: ndarray
+        The initial state.
+    par0: ndarray
+        The array of parameters.
+    vary_par: int
+        The index of the parameter being varied.
+    step_size: float
+        The size of the step to take.
+    max_steps: int
+        The number of steps to take.
+    solve_for: str
+        Choose from 'equilibria' or 'limit_cycle'. If 'equilibria' is chosen, the function will solve for equilibria. If 'limit_cycle' is chosen, the function will solve for limit cycle conditions.
+    method: str
+        Choose from 'pArclength' or 'nParam'. If 'pArclength' is chosen, the function will use pseudo-arclength continuation. If 'nParam' is chosen, the function will use natural parameter continuation.
+    solver: function
+        The solver to use. Code currently only supports scipy.optimize.root.
+        
+    Returns
+    -------
+    Returns a matrix containing the solution and varying parameter.
+    """
+
     x_dim = len(x0) # Dimension of the solution
     u = gen_sol_mat(x_dim,max_steps) # Initialise matrix to contain solution and varying parameter
 
