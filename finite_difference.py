@@ -258,8 +258,8 @@ def diffusion_solver(grid,
     u = np.zeros((len(grid.x),t_steps+1)) # Initialise array to store solutions
     t_final = dt*t_steps # Final time
 
-    if t_steps != int or t_steps <= 0: # Check if t_final is a positive integer
-        raise TypeError('t_final must be a positive integer.')
+    if type(t_steps) != int or t_steps <= 0: # Check if t_final is a positive integer
+        raise TypeError('t_steps must be a positive integer.')
 
     # Account for different types of source term
     
