@@ -2,14 +2,12 @@
 
 import numpy as  np
 from math import floor
-import matplotlib.pyplot as plt
 import types
 from integrate import solve_to
 import scipy.sparse as sp
-from matplotlib.animation import FuncAnimation 
-import plotly.graph_objects as go
-import inspect
 from scipy.integrate import solve_ivp
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 def gen_diag_mat(N,entries):
 
@@ -350,80 +348,4 @@ def diffusion_solver(grid,
         raise ValueError('Method not recognised.')
     
     return u
-    
-
-#%%
-
-""" GENERATE SOLUTION """
-
-t_steps = 1000
-storage = 'sparse'
-D=1
-dt = 0.1
-method = 'crank-nicolson'
-
-grid = Grid(N=100, a=0, b=1)
-bc_left = BoundaryCondition('dirichlet', [lambda t: 0], grid)
-bc_right = BoundaryCondition('dirichlet', [lambda t: 0], grid)
-x = grid.x
-q = 1
-IC = 0
-
-
-u = diffusion_solver(grid,
-                    bc_left,
-                    bc_right,
-                    IC = 0,
-                    D=0.1,
-                    q=1,
-                    dt=0.1,
-                    t_steps=t_steps,
-                    method='crank-nicolson',
-                    storage = 'sparse')
-
-
-#%%
-
-""" ANIMATING SOLUTION """
-
-if bc_left.type == 'dirichlet':
-    x = x[1:]
-if bc_right.type == 'dirichlet':
-    x = x[:-1] 
-
-fig,ax = plt.subplots()
-
-line, = ax.plot(x,u[:,0])
-ax.set_ylim(0,1)
-ax.set_xlim(grid.left,grid.right)
-
-def animate(i):
-    line.set_data((x,u[:,i]))
-    return line,
-
-ani = FuncAnimation(fig, animate, frames=t_steps, interval=1, blit=True)
-plt.show()
-
-
-# %%
-
-""" PLOT SOLUTION AS 3D SURFACE """
-
-t_values = np.arange(0, (t_steps + 1) * dt, dt)
-fig = go.Figure(data=[go.Surface(z=u, x=t_values, y=x)])
-
-fig.update_layout(
-    title='u(x,t)',
-    autosize=False,
-    scene=dict(
-        xaxis=dict(range=[0, 3]),
-        xaxis_title='t',
-        yaxis_title='x',
-        zaxis_title='u(x, t)'),
-    width=500,
-    height=500,
-    margin=dict(l=65, r=50, b=65, t=90)
-)
-
-fig.show()
 

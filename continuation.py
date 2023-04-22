@@ -3,7 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from shooting import shooting
-from scipy.optimize import fsolve,root
+from scipy.optimize import root
 from functions import PPM, h
 
 
@@ -37,6 +37,10 @@ def predictor(u_current,u_old,method,step_size):
         Array containing the current solution and the current value of the parameter being varied.
     u_old: ndarray
         Array containing the previous solution and the previous value of the parameter being varied.
+    method: str
+        Choose from 'nParam' for natural parameter or 'pArclength' for pseudo-arclength continuation
+    step_size: float
+        Size of steps taken when varying parameter.
     Returns
     -------
     u_pred: ndarray
