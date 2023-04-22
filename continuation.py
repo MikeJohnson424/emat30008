@@ -26,7 +26,7 @@ def gen_sol_mat(x_dim,max_steps):
     """
     return np.zeros((x_dim+1,max_steps+1))
 
-def predictor(u_current,u_old):
+def predictor(u_current,u_old,method,step_size):
 
     """
     A function for performing the predictor step of pseudo-arclength continuation.
@@ -44,12 +44,16 @@ def predictor(u_current,u_old):
     delta_u: ndarray
         Array containing the difference between the current and previous solutions and the difference between the current and previous values of the parameter being varied.
     """
+    if method == 'pArclength':
+        delta_u = u_current - u_old
+        u_pred = u_current + delta_u
+    else:
+        delta_u = np.hstack((np.zeros(len(u_old)-1),step_size))
+        u_pred = u_current + delta_u       
 
-    delta_u = u_current - u_old
-    u_pred = u_current + delta_u
     return [u_pred,delta_u]
 
-def corrector(myode,u,u_pred,delta_u,vary_par,par0,solve_for):
+def corrector(myode,u,vary_par,par0,solve_for,u_pred,delta_u):
 
     """
     A function to solve as part of the corrector stage of pseudo-arclength continuation.
@@ -83,6 +87,7 @@ def corrector(myode,u,u_pred,delta_u,vary_par,par0,solve_for):
     else:
         R1 = myode(u[:-1],None,par0)
         R2 = np.dot(u - u_pred, delta_u)
+
     return np.hstack((R1,R2))
 
 def find_initial_solutions(solver,myode,x0,par0,vary_par,step_size,solve_for):
@@ -138,7 +143,7 @@ def find_initial_solutions(solver,myode,x0,par0,vary_par,step_size,solve_for):
     
     return [u_old,u_current]
 
-def continuation(myode,x0,par0,vary_par=0,step_size=0.1,max_steps=50,solve_for = 'equilibria', method='pseudo-arclength',solver=root):
+def continuation(myode,x0,par0,vary_par=0,step_size=0.1,max_steps=50,solve_for = 'equilibria', method='pArclength',solver=root):
     
     """
     A function for performing continuation.
@@ -148,13 +153,15 @@ def continuation(myode,x0,par0,vary_par=0,step_size=0.1,max_steps=50,solve_for =
     my_ode: function
         Function to perform continuation on.
     x0: ndarray
-        The initial state.
+        Guess for initial solution. If solve_for is 'equilibria', x0 should be a guess for the equilibrium. 
+        If solve_for is 'limit_cycle', x0 should be a guess for the limit cycle conditions, i.e. [x0,T] 
+        where x0 is a guess for a point on a limit cycle and T is the period of the limit cycle.
     par0: ndarray
         The array of parameters.
     vary_par: int
         The index of the parameter being varied.
     step_size: float
-        The size of the step to take.
+        The size of the steps to take. For pseudo-arclength this only applies to the initial step.
     max_steps: int
         The number of steps to take.
     solve_for: str
@@ -182,16 +189,15 @@ def continuation(myode,x0,par0,vary_par=0,step_size=0.1,max_steps=50,solve_for =
 
         # Predictor-Corrector
 
-        u_pred,delta_u = predictor(u_current,u_old)
+        u_pred,delta_u = predictor(u_current,u_old,method,step_size)
         u_true = solver(lambda u: 
-                        corrector(myode,u,u_pred,delta_u,vary_par,par0,solve_for),
-                          u_pred).x
+                        corrector(myode,u,vary_par,par0,solve_for,u_pred,delta_u),
+                        u_pred).x
         
         # Update values for next iteration
 
         u_old = u_current
         u_current = u_true
-        
 
     return u
 
@@ -205,7 +211,9 @@ plt.plot(y-y**3,y)
 u = continuation(h,x0 = [1],par0 = [-2],
                    vary_par = 0,
                    step_size = 0.1,
-                   max_steps = 50)
+                   max_steps = 50,
+                   solve_for = 'equilibria',
+                   method = 'nParam')
 plt.plot(u[-1],u[0])
 
 #%%
@@ -215,7 +223,9 @@ plt.plot(u[-1],u[0])
 u = continuation(PPM,x0 = [0.5,0.3],par0 = [0.5,0.2,0.1],
                    vary_par = 0,
                    step_size = 0.1,
-                   max_steps = 50)
+                   max_steps = 50,
+                   solve_for = 'equilibria',
+                   method = 'pArclength')
 plt.plot(u[-1],u[0])
 
 # %%
@@ -231,7 +241,8 @@ myode = PPM; x0 = [5,6]; par0 = [0.5,0.2,0.1]; vary_par = 0; step_size = 0.1; ma
 #                    vary_par = 0,
 #                    step_size = 0.1,
 #                    max_steps = 20,
-#                    solve_for = 'limit_cycle')
+#                    solve_for = 'limit_cycle',
+#                    method = 'pArclength')
 # plt.plot(u[-1],u[0])
 
 
