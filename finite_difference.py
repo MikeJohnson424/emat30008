@@ -282,7 +282,7 @@ def diffusion_solver(grid,
     else:
         raise ValueError('Storage type must be "dense" or "sparse"')
 
-    if method == 'explicit-euler' or 'lines':
+    if method in ('explicit-euler','lines'):
         dt = 0.5*dx**2/D # Recalculate dt to ensure stability if a time-step restriction is present
 
     # Set initial condition
@@ -311,7 +311,7 @@ def diffusion_solver(grid,
 
             dt = 0.5*dx**2/D # Recalculate dt to ensure stability
             t = dt*n # Current time
-            U = U + dt*D/dx**2*(mat_mul(A,b)+b(t))+dt*q(x,t,u) # Time march solution
+            U = U + dt*du_dt(U, t, [A, b, q, D, dx, x])
             u[:,n+1] = U # Store solution
 
     elif method == 'lines':
@@ -323,8 +323,8 @@ def diffusion_solver(grid,
         for n in range(t_steps):
 
             t = n*dt+dt # Time at next time-level
-            U = non_linear_solver(gen_eye(len(U))-C*A,
-                                    U+C*b(t)+q(x,t,None)) # Solve for u_n+1 using implicit method
+            U = non_linear_solver( gen_eye(len(U))-C*A ,
+                                    U+C*b(t)+dt*q(x,t,None)) # Solve for u_n+1 using implicit method
             u[:,n+1] = U # Store solution
 
     elif method == 'crank-nicolson':
@@ -333,7 +333,7 @@ def diffusion_solver(grid,
 
             t_current = n*dt # Current time
             t_next = t_current + dt            
-            U = non_linear_solver(gen_eye(len(U)-C/2*A),
+            U = non_linear_solver(gen_eye(len(U))-C/2*A,
                                   mat_mul((gen_eye(len(U))+C/2*A),U) + C/2*(b(t_current)+b(t_next)) + dt/2*(q(x,t_current,None)+q(x,t_next,None)))
             u[:,n+1] = U # Store solution
 
@@ -350,7 +350,7 @@ def diffusion_solver(grid,
 
 """ GENERATE SOLUTION """
 
-t_steps = 100
+t_steps = 1000
 storage = 'sparse'
 D=1
 dt = 0.1
@@ -373,7 +373,7 @@ u = diffusion_solver(grid,
                     dt=0.1,
                     t_steps=t_steps,
                     method='crank-nicolson',
-                    storage = 'dense')
+                    storage = 'sparse')
 
 
 #%%
@@ -420,4 +420,4 @@ fig.update_layout(
 )
 
 fig.show()
-# %%
+
