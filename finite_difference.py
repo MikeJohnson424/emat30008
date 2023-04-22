@@ -258,7 +258,7 @@ def diffusion_solver(grid,
     u = np.zeros((len(grid.x),t_steps+1)) # Initialise array to store solutions
     t_final = dt*t_steps # Final time
 
-    if t_final != int or t_final <= 0: # Check if t_final is a positive integer
+    if t_steps != int or t_steps <= 0: # Check if t_final is a positive integer
         raise TypeError('t_final must be a positive integer.')
 
     # Account for different types of source term
@@ -300,7 +300,7 @@ def diffusion_solver(grid,
     else:
         raise TypeError('Initial condition must be some function f(x) or constant')
 
-    # Remove rows from solution matrix if dirichlet boundary conditions are used
+    # Adjust domain and solution dimensions to account for dirichlet boundary conditions
 
     if bc_left.type == 'dirichlet':
         u = u[:-1]; x = x[1:]
