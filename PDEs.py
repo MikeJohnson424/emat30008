@@ -87,7 +87,7 @@ def BoundaryCondition(bcon_type, value,grid):
     bcon_type : String
         Determine the nature of the boundary condition
     Value : Python list
-        Python list containing a lambda function. The associated values corresponding to the boundary condition. 
+        Python list containing a float, int or some function f(t). The associated values corresponding to the boundary condition. 
         For example, for a Dirichlet condition, the value is the value 
         of the function at the boundary. For a Neumann condition, the 
         value is the derivative of the function at the boundary. For 
@@ -104,13 +104,13 @@ def BoundaryCondition(bcon_type, value,grid):
     # Define the A matrix entries for each boundary condition, check for invalid inputs
 
     if bcon_type == 'dirichlet':
-        if not (isinstance(value, list) and len(value) == 1):
-            raise ValueError('Dirichlet condition requires a python list containing either a float, int or function')
+        if not isinstance(value, list) or not all(isinstance(x, (int, float, types.FunctionType)) for x in value):
+            raise TypeError('Dirichlet boundary condition requires a list containing an integer, float, or function f(t).')
         A_entry = [-2, 1]
 
     elif bcon_type == 'neumann':
-        if not (isinstance(value, list) and len(value) == 1):
-            raise ValueError('Neumann condition requires a python list containing either a float, int or function')
+        if not isinstance(value, list) or not all(isinstance(x, (int, float, types.FunctionType)) for x in value):
+            raise TypeError('Neumann boundary condition requires a list containing an integer, float, or function f(t).')
         A_entry = [-2,2]
 
     elif bcon_type == 'robin':
@@ -122,7 +122,7 @@ def BoundaryCondition(bcon_type, value,grid):
 
     class BC:
         def __init__(self,type,value, A_entry):
-            self.type = bcon_type
+            self.type = type
             self.value = value
             self.A_entry = A_entry
 
@@ -363,3 +363,27 @@ def diffusion_solver(grid,
 
     return result(u,x,np.linspace(0,t_final,t_steps+1))
 
+#%%
+
+grid = Grid(N=10, a=0, b=1)
+bc_left = BoundaryCondition('dirichlet', [5], grid)
+bc_right = BoundaryCondition('dirichlet', [10], grid)
+t_steps = 1000
+x = grid.x
+
+result = diffusion_solver(grid,
+                    bc_left,
+                    bc_right,
+                    IC = 0,
+                    D=0.1,
+                    q=1,
+                    dt=0.1,
+                    t_steps=t_steps,
+                    method='explicit-euler',
+                    storage = 'sparse')
+
+u = result.u
+x = result.x
+t_span = result.t
+
+# %%
