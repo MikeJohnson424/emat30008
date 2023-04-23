@@ -254,7 +254,13 @@ def diffusion_solver(grid,
     
     Returns
     -------
-    Returns a numpy array containing the solution at each time step.
+    Returns class result containing attributes u, t and x.:
+    result.u : array
+        Array of solutions at each time step.
+    result.t : array
+        Array of time steps.
+    result.x : array
+        Array of grid points.
     """
     
     dx = grid.dx # Grid spacing
@@ -332,7 +338,7 @@ def diffusion_solver(grid,
 
     elif method == 'lines':
 
-        u = solve_to(du_dt, U, t = t_final,parameters=[A,b,q,D,dx,x],deltat_max = dt).x
+        u = solve_to(du_dt, U, t = [0,t_final],parameters=[A,b,q,D,dx,x],deltat_max = dt).x
 
     elif method == 'implicit-euler':
 

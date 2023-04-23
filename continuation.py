@@ -2,7 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from shooting import shooting
+from BVP import shooting
 from scipy.optimize import root
 from functions import PPM, h
 

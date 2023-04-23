@@ -1,5 +1,4 @@
 
-
 import numpy as np
 from functions import PPM
 import matplotlib.pyplot as plt
@@ -88,6 +87,9 @@ def solve_to(func, x0, t, parameters=[], deltat_max=0.01, method = 'RK4'):
     a numpy array containing solution across time to ODE system given x0.
     """
 
+
+    t0,t1 = t
+
     # Define stepper function to be used in integration, return ValueError if method not recognised:
 
     if method == 'forward_euler':
@@ -99,15 +101,15 @@ def solve_to(func, x0, t, parameters=[], deltat_max=0.01, method = 'RK4'):
 
     # Check for negative input in time and throw error:
 
-    if t[0] <= 0:
+    if t0 < 0:
         raise ValueError("Time cannot be negative!") 
 
     # Define arrays to store solution and iterate over time:
 
     counter = 0
     x_old = np.array(x0) 
-    t_space = np.arange(0,t+deltat_max,deltat_max) 
-    t_space[-1] = t # Final time must be equal to user input t
+    t_space = np.arange(t0,t1+deltat_max,deltat_max) 
+    t_space[-1] = t1 # Final time must be equal to user input t
 
     x = np.zeros([len(x_old),len(t_space)]) # Define array to store solution
 
@@ -122,8 +124,8 @@ def solve_to(func, x0, t, parameters=[], deltat_max=0.01, method = 'RK4'):
 
     # Complete final iteration where time-step != deltat_max:
 
-    delta_t = t - t_space[-2]
-    x[:,counter] = stepper(delta_t, x[:,-2],func,parameters,t)
+    delta_t = t1 - t_space[-2]
+    x[:,counter] = stepper(delta_t, x[:,-2],func,parameters,t1)
 
     # Define class to return result as object with attributes x and t_space:
 
@@ -133,4 +135,3 @@ def solve_to(func, x0, t, parameters=[], deltat_max=0.01, method = 'RK4'):
             self.t_space = t_space
 
     return result(x, t_space)
-

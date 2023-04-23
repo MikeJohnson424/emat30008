@@ -60,8 +60,6 @@ def find_lim_cycle_conditions(func,init,parameters):
 
 # %%
 
-lim_cycle_conditions = find_lim_cycle_conditions(PPM,[0.5,0.5,20],[1,0.5,0.1])
-lim_cycle = solve_to(PPM,lim_cycle_conditions[:-1],lim_cycle_conditions[-1],[1,0.1,0.1])
-plt.plot(lim_cycle.x[0],lim_cycle.x[1])
+
 
 # %%

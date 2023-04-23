@@ -68,7 +68,7 @@ def diffusion_ODE(x,t=None,parameters = []):
 def hopf_normal_form_sol(t, beta=1, theta=0): # Define solution to hopf normal form
 
     x1 = np.sqrt(beta)*np.cos(t+theta)
-    x2 = np.sqrt(beta)*np.cos(t+theta)
+    x2 = np.sqrt(beta)*np.sin(t+theta)
 
     return np.array([x1,x2])
 
