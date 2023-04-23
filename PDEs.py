@@ -104,13 +104,13 @@ def BoundaryCondition(bcon_type, value,grid):
     # Define the A matrix entries for each boundary condition, check for invalid inputs
 
     if bcon_type == 'dirichlet':
-        if not (isinstance(value, list) and len(value) == 1 and isinstance(value[0], types.FunctionType)):
-            raise ValueError('Dirichlet condition requires a python list containing a lambda function.')
+        if not (isinstance(value, list) and len(value) == 1):
+            raise ValueError('Dirichlet condition requires a python list containing either a float, int or function')
         A_entry = [-2, 1]
 
     elif bcon_type == 'neumann':
-        if not (isinstance(value, list) and len(value) == 1 and isinstance(value[0], types.FunctionType)):
-            raise ValueError('Dirichlet condition requires a python list containing a lambda function.')
+        if not (isinstance(value, list) and len(value) == 1):
+            raise ValueError('Neumann condition requires a python list containing either a float, int or function')
         A_entry = [-2,2]
 
     elif bcon_type == 'robin':
@@ -151,16 +151,14 @@ def construct_A_and_b(grid,bc_left,bc_right,storage_type = 'dense'):
     x = grid.x # Domain of problem
     dx = grid.dx # Grid spacing
     N = len(x)-1 
-    b = np.zeros(N+1) # Initlialize b vector    
+    b = np.zeros(N+1) # Initialize b vector    
     A = gen_diag_mat(N+1,[1,-2,1]) # Initialize A matrix
 
-    # Change A entries depending on if boundary conditions are robin or neumann
+    # Update A and b according to boundary conditions
 
     A[0,:2] = bc_left.A_entry
     A_entry_right = bc_right.A_entry;A_entry_reversed = A_entry_right[::-1]
     A[-1,-2:] = A_entry_reversed
-
-    # Update A matrix and b vector if either boundary condition is dirichlet
 
     if bc_left.type == 'dirichlet':
         A = A[1:,1:]
@@ -172,17 +170,26 @@ def construct_A_and_b(grid,bc_left,bc_right,storage_type = 'dense'):
     if storage_type == 'sparse': # Convert A matrix to sparse matrix
         A = sp.csr_matrix(A)
 
+    # Convert values to functions if they are not already functions
+
+    if type(bc_left.value[0]) != types.FunctionType:
+        bc_left_value = bc_left.value[0]
+        bc_left.value[0] = lambda t: bc_left_value
+
+    if type(bc_right.value[0]) != types.FunctionType:
+        bc_right_value = bc_right.value[0]
+        bc_right.value[0] = lambda t: bc_right_value
+
     # Define function that returns b vector
 
     def b_func(t):
 
-        if type(bc_right.value[0]) != types.FunctionType:
-            bc_left.value[0] = lambda t: bc_left.value[0]
-        if type(bc_right.value[0]) != types.FunctionType:
-            bc_right.value[0] = lambda t: bc_right.value[0]
+        # First and last entries of b vector 2*gamma*dx for Neumann and Robin conditions
             
         b[0] = 2*bc_left.value[0](t)*dx
         b[-1] = 2*bc_right.value[0](t)*dx 
+
+        # Dirichlet conditions
     
         if bc_left.type == 'dirichlet':
             b[0] = bc_left.value[0](t)
@@ -355,5 +362,4 @@ def diffusion_solver(grid,
             self.t = t
 
     return result(u,x,np.linspace(0,t_final,t_steps+1))
-
 
