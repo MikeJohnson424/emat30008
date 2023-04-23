@@ -46,6 +46,7 @@ def third_order_hopf(x, t=None, parameters = [1,-1]): # Define a third order hop
     return np.array([dx1_dt,dx2_dt,dx3_dt])
 
 def modified_hopf(x, t=None, parameters = [1]):
+    
     beta = parameters
     x1,x2 = x
     dx1_dt = beta*x1 - x2 + x1*(x1**2 + x2**2) - x1*(x1**2 + x2**2)**2
