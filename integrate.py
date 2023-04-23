@@ -75,8 +75,8 @@ def solve_to(func, x0, t, parameters=[], deltat_max=0.01, method = 'RK4'):
         The ODE to solve to time t from time = 0.
     x0 : Python List
         Initial conditions for ODE system
-    t : Float
-        Time to integrate up until from t = 0
+    t : Python list
+        Integrate from t[0] to t[1]
     deltat_max : Float
         Defines the maximum time step to be used in the integration
     method : String
@@ -99,7 +99,7 @@ def solve_to(func, x0, t, parameters=[], deltat_max=0.01, method = 'RK4'):
 
     # Check for negative input in time and throw error:
 
-    if t <= 0:
+    if t[0] <= 0:
         raise ValueError("Time cannot be negative!") 
 
     # Define arrays to store solution and iterate over time:

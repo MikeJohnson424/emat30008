@@ -13,7 +13,7 @@ def shooting(func,init,parameters):
 
     x_0 = init[:-1]
     T = init[-1]
-    sol = solve_to(func,x_0,T,parameters) 
+    sol = solve_to(func,x_0,[0,T],parameters) 
     x_T = sol.x[:,-1]
     dxdt_0 = func(x_0,0,parameters)[0]
     
@@ -36,7 +36,7 @@ def solve_BVP(func,bc_left,bc_right,parameters,T,method = 'shooting',grid= None)
     if method == 'shooting':
 
         def shooting(func,IC,x_final,parameters):
-            return solve_to(func,IC,T,parameters).x[:,-1] - x_final
+            return solve_to(func,IC,[0,T],parameters).x[:,-1] - x_final
         
         sol = root(lambda x: shooting(func,x,x_final,parameters),x0)
     
