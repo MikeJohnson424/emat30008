@@ -55,6 +55,14 @@ def modified_hopf(x, t=None, parameters = [1]):
     return np.array([dx1_dt, dx2_dt])
 
 
+def diffusion_ODE(x,t=None,parameters = []):
+    x1,x2 = x
+    D,q = parameters
+    dx1_dt = x2
+    dx2_dt = -q/D
+
+    return np.array([dx1_dt,dx2_dt])
+
 """ == OTHER FUNCTIONS == """
 
 def hopf_normal_form_sol(t, beta=1, theta=0): # Define solution to hopf normal form

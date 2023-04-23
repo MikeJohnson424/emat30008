@@ -4,7 +4,7 @@
 import unittest
 from integrate import solve_to, RK4_step, euler_step
 from functions import*
-import shooting
+import BVP
 import unittest
 import numpy as np
 from math import isclose
@@ -249,10 +249,28 @@ class TestComplementaryFunctions(unittest.TestCase):
     
 class TestDiffusionSolver(unittest.TestCase):
     
-    def test_IVP(self):
-        # If initial condition == const.
-        # If initial condition == f(x)
-        pass
+    def setUp(self):
+        self.grid = Grid(10, 0, 1)
+        self.bc_left = BoundaryCondition('dirichlet', [5],self.grid)
+        self.bc_right = BoundaryCondition('dirichlet', [10], self.grid)
+        self.IC = 0
+        self.D = 1
+        self.q = 0
+        self.dt = 0.1
+        self.t_steps = 10
+        self.method = 'implicit-euler'
+        self.storage = 'dense'
+
+    def test_diffusion_solver_conserves_dirichlet_boundary_conditions(self):
+        result = diffusion_solver(self.grid, self.bc_left, self.bc_right, self.IC, self.D, self.q, self.dt, self.t_steps, self.method, self.storage)
+        self.assertEqual(result.u[0, 0], self.bc_left.value)
+        self.assertEqual(result.u[-1, 0], self.bc_right.value)
+
+    def test_diffusion_solver_with_function_IC(self):
+        IC = lambda x: x ** 2
+        result = diffusion_solver(self.grid, self.bc_left, self.bc_right, IC, self.D, self.q, self.dt, self.t_steps, self.method, self.storage)
+        self.assertTrue(np.allclose(result.u[:, 0], IC(self.grid.x), atol=1e-6))
+
     def test_explicit_euler(self):
         pass
     def test_implicit_euler(self):

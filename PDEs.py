@@ -267,7 +267,7 @@ def diffusion_solver(grid,
     if type(t_steps) != int or t_steps <= 0: # Check if t_final is a positive integer
         raise TypeError('t_steps must be a positive integer.')
 
-    # Account for different types of source term
+    # If source term entered as a float of integer, convert to function. Raise type error if not a float, integer or function.
     
     if type(q) in (float,int):
         q = (lambda value: lambda x, t, u: value)(q)
@@ -276,10 +276,11 @@ def diffusion_solver(grid,
     else:
         raise TypeError('q must be a float, integer or some function q(x,t,u)')
     
-    # Check if method conflicts with source term
+    # Check for non-linear source term, if detected then switch method to IMEX
 
     if q(1,1,1) != q(1,1,0) and method in ('implicit-euler','crank-nicolson'):
-        raise Exception('Non-linear source terms cannot be used with chosen method.')
+        print('Warning: Non-linear source term detected, method is now IMEX.')
+        method = 'IMEX'
 
     # Adjust functions for solving matrix equations, generating identity matrix and matrix multiplication depending on storage type.
 
@@ -293,15 +294,18 @@ def diffusion_solver(grid,
         mat_mul = lambda A,b: A.dot(b)
     else:
         raise ValueError('Storage type must be "dense" or "sparse"')
+    
+    # Check if time-step restriction is violated, if so adjust dt and print warning.
 
-    if method in ('explicit-euler','lines'):
-        dt = 0.5*dx**2/D # Recalculate dt to ensure stability if a time-step restriction is present
+    if method in ('explicit-euler','lines','IMEX') and dt>0.5*dx**2/D: 
+        print('Warning: Time-step restriction violated, dt has been adjusted to ensure stability.')
+        dt = 0.5*dx**2/D
 
-    # Set initial condition
+    # Impose initial condition on domain x at time t = 0
 
-    if isinstance(IC,types.FunctionType):
+    if isinstance(IC,types.FunctionType): 
         u[:,0] = IC(x)
-    elif type(IC) in (float,int):
+    elif type(IC) in (float,int): 
         u[:,0] = IC*np.ones(len(grid.x))
     else:
         raise TypeError('Initial condition must be some function f(x) or constant')
@@ -344,7 +348,7 @@ def diffusion_solver(grid,
         for n in range(t_steps):
 
             t_current = n*dt # Current time
-            t_next = t_current + dt            
+            t_next = t_current + dt # Time at next time-level        
             U = non_linear_solver(gen_eye(len(U))-C/2*A,
                                   mat_mul((gen_eye(len(U))+C/2*A),U) + C/2*(b(t_current)+b(t_next)) + dt/2*(q(x,t_current,None)+q(x,t_next,None)))
             u[:,n+1] = U # Store solution
