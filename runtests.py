@@ -8,7 +8,7 @@ import shooting
 import unittest
 import numpy as np
 from math import isclose
-from finite_difference import gen_diag_mat, Grid, BoundaryCondition, construct_A_and_b, diffusion_solver
+from PDEs import gen_diag_mat, Grid, BoundaryCondition, construct_A_and_b, diffusion_solver
 from continuation import gen_sol_mat, predictor, corrector,continuation, find_initial_solutions
 from scipy.optimize import root
 
@@ -58,26 +58,31 @@ class TestIntegrationMethods(unittest.TestCase):
 
     def test_solve_to(self): # Test for solving a function f(x) = x to a specified time using both forward euler and fourth order runge-kutta 
         x0 = [1]
-        t = 0.4
+        t = 1
         deltat_max = 0.0001
+        expected = np.e
+
         method = 'forward_euler'
         result = solve_to(f, x0, t, [], deltat_max, method)
 
-        self.assertEqual(len(result.t_space), len(result.x[0]), msg="Incorrect dimensions of solution")
-        self.assertAlmostEqual(result.t_space[-1], t, msg="Final time in t_space does not match specified time")
+        self.assertEqual(len(result.t_space), len(result.x[0]), msg="Time array dimensions do not match solution dimensions")
+        self.assertAlmostEqual(result.t_space[-1], t, msg="Final time in t_space does not match time specified by user")
+        self.assertAlmostEqual(result.x[0,-1],expected, places = 3,msg="Solution does not match expected solution")
 
         method = 'RK4'
         result = solve_to(f, x0, t, [], deltat_max, method)
 
-        self.assertEqual(len(result.t_space), len(result.x[0]),msg= "Incorrect dimensions of solution")
-        self.assertAlmostEqual(result.t_space[-1], t, msg="Final time in t_space does not match specified time")
+        self.assertEqual(len(result.t_space), len(result.x[0]),msg= "Time array dimensions do not match solution dimensions")
+        self.assertAlmostEqual(result.t_space[-1], t, msg="Final time in t_space does not match time specified by user")
+        self.assertAlmostEqual(result.x[0,-1],expected, places = 8,msg="Solution does not match expected solution")
 
-    def test_solve_to_negative_time_error(self):
+
+    def test_solve_to_errors(self): # Test if solve_to raises correct errors
         x0 = [1]
         t = -0.4
         deltat_max = 0.0001
         method = 'forward_euler'
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValueError): # Test if solve_to raises error if time is negative
             solve_to(f, x0, t, [], deltat_max, method)
 
 

@@ -1,4 +1,4 @@
-#%%
+
 
 import numpy as np
 from functions import PPM
@@ -24,6 +24,8 @@ def euler_step(deltat_max,x, func,parameters,t=None): # define function to compu
     Returns a python list defining the solution at the next time-level.
     """
 
+    # Solve for x at t+deltat_max:
+
     x_n1 = x + deltat_max*func(x,t)
     return x_n1
 
@@ -48,11 +50,17 @@ def RK4_step(deltat_max,x,func,parameters,t=None):
     Returns a numpy array that defines the solution at the next time-step.
     """ 
 
+    # Define incremental function values:
+
     k1 = func(x,t,parameters)
     k2 = func(x+deltat_max*k1/2, t+deltat_max/2, parameters)
     k3 = func(x + deltat_max*k2/2, t+ deltat_max/2, parameters)
     k4 = func(x+deltat_max*k3, t+deltat_max, parameters)
+
+    # Solve for next time-step:
+
     x_n1 = x + (deltat_max/6)*(k1+2*k2+2*k3+k4)
+
     return x_n1
 
 def solve_to(func, x0, t, parameters=[], deltat_max=0.01, method = 'RK4'):
@@ -80,21 +88,30 @@ def solve_to(func, x0, t, parameters=[], deltat_max=0.01, method = 'RK4'):
     a numpy array containing solution across time to ODE system given x0.
     """
 
+    # Define stepper function to be used in integration, return ValueError if method not recognised:
+
     if method == 'forward_euler':
         stepper = euler_step
     elif method =='RK4':
         stepper = RK4_step
+    else:
+        raise ValueError("Method must be either 'forward_euler' or 'RK4'")
+
+    # Check for negative input in time and throw error:
 
     if t <= 0:
+        raise ValueError("Time cannot be negative!") 
 
-        raise ValueError("Time cannot be negative!") # Check for negative input in time and throw error
+    # Define arrays to store solution and iterate over time:
 
     counter = 0
-    x_old = np.array(x0)
-    t_space = np.arange(0,t+deltat_max,deltat_max)
-    t_space[-1] = t # Ensure that t_space always includes limits of t defined by user
+    x_old = np.array(x0) 
+    t_space = np.arange(0,t+deltat_max,deltat_max) 
+    t_space[-1] = t # Final time must be equal to user input t
 
-    x = np.zeros([len(x_old),len(t_space)])
+    x = np.zeros([len(x_old),len(t_space)]) # Define array to store solution
+
+    # Iterate over t_space using chosen stepper function:
       
     for i in t_space[0:-1]:
 
@@ -108,7 +125,7 @@ def solve_to(func, x0, t, parameters=[], deltat_max=0.01, method = 'RK4'):
     delta_t = t - t_space[-2]
     x[:,counter] = stepper(delta_t, x[:,-2],func,parameters,t)
 
-    # Define class to return result:
+    # Define class to return result as object with attributes x and t_space:
 
     class result:
         def __init__(self,x,t_space):
@@ -117,17 +134,3 @@ def solve_to(func, x0, t, parameters=[], deltat_max=0.01, method = 'RK4'):
 
     return result(x, t_space)
 
-
-#%%
-
-def f(x,t,parameters=[]):
-
-    return (x**2+t**2)
-
-result = solve_to(func = f,x0 = [1],t=0.4,parameters = [], deltat_max = 0.0001, method='forward_euler')
-
-#plt.plot(result.t_space,result.x[0])
-#print(result.x[0,-1])
-
-
-# %%

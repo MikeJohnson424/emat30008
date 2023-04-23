@@ -65,8 +65,8 @@ def Grid(N=10,a=0,b=1):
     grid.right : Float
         Upper limit of domain x
     """
-    x = np.linspace(a,b,N+1)
-    dx = (b-a)/N
+    x = np.linspace(a,b,N+1) # Arry of grid points
+    dx = (b-a)/N # Grid spacing
 
     class grid:
         def __init__(self,x,dx,left,right):
@@ -99,23 +99,24 @@ def BoundaryCondition(bcon_type, value,grid):
     Returns a class containing the modified A entry, value and type of boundary condition.
     """
 
-    dx = grid.dx
+    dx = grid.dx # Grid spacing
+
+    # Define the A matrix entries for each boundary condition, check for invalid inputs
 
     if bcon_type == 'dirichlet':
-        if type(value) != list or len(value) != 1 or isinstance(value[0], types.FunctionType) == False:
+        if not (isinstance(value, list) and len(value) == 1 and isinstance(value[0], types.FunctionType)):
             raise ValueError('Dirichlet condition requires a python list containing a lambda function.')
-        A_entry = [-2,1]
+        A_entry = [-2, 1]
 
     elif bcon_type == 'neumann':
-        if type(value) != list or len(value) != 1 or isinstance(value[0], types.FunctionType) == False:
-            raise ValueError('Neumann condition requires a python list containing a lambda function')
+        if not (isinstance(value, list) and len(value) == 1 and isinstance(value[0], types.FunctionType)):
+            raise ValueError('Dirichlet condition requires a python list containing a lambda function.')
         A_entry = [-2,2]
 
     elif bcon_type == 'robin':
-        if type(value) != list or len(value) != 2:
+        if not(type(value) == list and len(value) == 2):
             raise ValueError('Robin condition requires a list containing two values')
         A_entry = [-2*(1+value[1]*dx), 2] # Value = [delta, gamma]
-
     else:
         raise ValueError('Boundary condition type not recognized')
 
