@@ -18,6 +18,7 @@ def shooting(func,init,parameters):
     
     return np.hstack((x_0 - x_T, dxdt_0))
 
+
 def find_lim_cycle_conditions(func,init,parameters):
 
     lim_cycle_initial_conditions = root(lambda x: shooting(func,x,parameters),init).x

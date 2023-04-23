@@ -9,7 +9,7 @@ import types
 from continuation import continuation
 from scipy.optimize import root
 from functions import bratu
-from finite_difference import gen_diag_mat
+from PDEs import gen_diag_mat
 
 def Grid(N = 10, a = 0, b = 1):
 

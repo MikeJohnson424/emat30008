@@ -1,7 +1,7 @@
 import timeit
 import cProfile
 import numpy as np
-from finite_difference import Grid, BoundaryCondition, diffusion_solver
+from PDEs import Grid, BoundaryCondition, diffusion_solver
 
 pr = cProfile.Profile()
 pr.enable()
