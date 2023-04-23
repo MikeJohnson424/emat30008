@@ -84,6 +84,65 @@ class TestIntegrationMethods(unittest.TestCase):
         method = 'forward_euler'
         with self.assertRaises(ValueError): # Test if solve_to raises error if time is negative
             solve_to(f, x0, t, [], deltat_max, method)
+        with self.assertRaises(ValueError):
+            solve_to(f, x0, t, [], deltat_max, 'Unrecognised method') # Test if solve_to raises error if method is not recognised
+
+# Class for testing supporting functions to continuation, solve_to and diffusion_solver
+
+class TestComplementaryFunctions(unittest.TestCase): 
+    
+    def test_construct_A_and_b(self):
+        expected = 'an array'
+        pass
+    
+    def test_gen_diag_mat(self):
+        expected = np.array([
+            [-2,  1,  0,  0],
+            [ 1, -2,  1,  0],
+            [ 0,  1, -2,  1],
+            [ 0,  0,  1, -2]
+        ])
+        result = gen_diag_mat(4, [1, -2, 1])
+        np.testing.assert_array_equal(expected, result)
+    
+    def test_grid(self):
+        grid = Grid(N=10, a=0, b=1)
+        self.assertEqual(grid.dx, 0.1)
+        np.testing.assert_array_equal(grid.x, np.linspace(0, 1, 11))
+        self.assertEqual(grid.left, 0)
+        self.assertEqual(grid.right, 1)
+    
+    def test_boundary_condition(self):
+        bcon_type = 'dirichlet'
+        value = [1]
+        grid = Grid(10, 0, 1)
+        bc = BoundaryCondition(bcon_type, value, grid)
+        self.assertEqual(bc.type, bcon_type)
+        self.assertEqual(bc.value, value)
+        self.assertEqual(bc.A_entry, [-2, 1])
+
+        with self.assertRaises(ValueError):
+            BoundaryCondition('unrecognised bcon_type', value, grid)
+        with self.assertRaises(TypeError):
+            BoundaryCondition(bcon_type, 1, grid)
+            BoundaryCondition(bcon_type, ['invalid_input'], grid)
+    
+    def test_gen_sol_mat(self):
+        result = gen_sol_mat(3, 4)
+        expected_shape = (4, 5)
+        self.assertEqual(result.shape, expected_shape)
+    
+    def test_predictor(self):
+        pass
+    
+    def test_corrector(self):
+        pass
+    
+    def test_find_initial_solutions(self):
+        pass
+    
+
+    
 
 
       
