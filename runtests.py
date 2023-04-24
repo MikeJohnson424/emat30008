@@ -296,7 +296,7 @@ class TestDiffusionSolver(unittest.TestCase):
     
 class TestContinuation(unittest.TestCase):
 
-    pass
+    test
 
 class TestShooting(unittest.TestCase):
 

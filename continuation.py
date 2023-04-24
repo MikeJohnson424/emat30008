@@ -2,7 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from BVP import shooting
+from BVP import lim_cycle_condition
 from scipy.optimize import root
 from functions import PPM, h
 
@@ -26,6 +26,62 @@ def gen_sol_mat(x_dim,max_steps):
     """
     return np.zeros((x_dim+1,max_steps+1))
 
+def find_initial_solutions(solver,myode,x0,par0,vary_par,step_size,solve_for):
+
+    """
+    A function for generating two initial solutions to be used in pseudo-arclength continuation.
+
+    Parameters
+    ----------
+    solver: function
+        The solver to use. Code currently only support scipy.optimize.root.
+    my_ode: function
+        Function to perform continuation on.
+    x0: ndarray
+        The initial state.
+    par0: ndarray
+        The array of parameters.
+    vary_par: int
+        The index of the parameter being varied.
+    step_size: float
+        The size of the step to take.
+    solve_for: str
+        Choose from 'equilibria' or 'limit_cycle'. If 'equilibria' is chosen, the function will solve for equilibria. If 'limit_cycle' is chosen, the function will solve for limit cycle conditions.
+    Returns
+    -------
+    u_old: ndarray
+        First solution.
+    u_current: ndarray
+        Second solution.
+    """
+
+    if solve_for == 'limit_cycle': # Solve for limit cycle conditions using shooting method
+        u_old = np.hstack((
+            solver(lambda x: lim_cycle_condition(myode,x,par0),x0).x,
+            par0[vary_par]
+        ))   
+        par0[vary_par] += step_size 
+        u_current = np.hstack((
+            solver(lambda x: lim_cycle_condition(myode,x,par0),u_old[:-1]).x,
+            par0[vary_par]
+            )) 
+        
+    elif solve_for == 'equilibria': # Solve for equilibria using chosen root finding method
+        u_old = np.hstack((
+            solver(lambda x: myode(x,None,par0),x0).x,
+            par0[vary_par]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+        ))
+        par0[vary_par] += step_size
+        u_current = np.hstack((
+            solver(lambda x: myode(x,None,par0),u_old[:-1]).x,
+            par0[vary_par]
+        ))
+    
+    else:
+        raise ValueError('solve_for not recognised, please choose from equilibria or limit_cycle')
+    
+    return [u_old,u_current]
+
 def predictor(u_current,u_old,method,step_size):
 
     """
@@ -48,8 +104,6 @@ def predictor(u_current,u_old,method,step_size):
     delta_u: ndarray
         Array containing the difference between the current and previous solutions and the difference between the current and previous values of the parameter being varied.
     """
-
-
 
     if method == 'pArclength':
         delta_u = u_current - u_old
@@ -91,69 +145,13 @@ def corrector(myode,u,vary_par,par0,solve_for,u_pred,delta_u):
     par0[vary_par] = u[-1] # Parameter is last entry in u
 
     if solve_for == 'limit_cycle':
-        R1 = shooting(myode,u[:-1],par0)
+        R1 = lim_cycle_condition(myode,u[:-1],par0)
         R2 = np.dot(u - u_pred, delta_u)
     else:
         R1 = myode(u[:-1],None,par0)
         R2 = np.dot(u - u_pred, delta_u)
 
     return np.hstack((R1,R2))
-
-def find_initial_solutions(solver,myode,x0,par0,vary_par,step_size,solve_for):
-
-    """
-    A function for generating two initial solutions to be used in pseudo-arclength continuation.
-
-    Parameters
-    ----------
-    solver: function
-        The solver to use. Code currently only support scipy.optimize.root.
-    my_ode: function
-        Function to perform continuation on.
-    x0: ndarray
-        The initial state.
-    par0: ndarray
-        The array of parameters.
-    vary_par: int
-        The index of the parameter being varied.
-    step_size: float
-        The size of the step to take.
-    solve_for: str
-        Choose from 'equilibria' or 'limit_cycle'. If 'equilibria' is chosen, the function will solve for equilibria. If 'limit_cycle' is chosen, the function will solve for limit cycle conditions.
-    Returns
-    -------
-    u_old: ndarray
-        First solution.
-    u_current: ndarray
-        Second solution.
-    """
-
-    if solve_for == 'limit_cycle': # Solve for limit cycle conditions using shooting method
-        u_old = np.hstack((
-            solver(lambda x: shooting(myode,x,par0),x0).x,
-            par0[vary_par]
-        ))   
-        par0[vary_par] += step_size 
-        u_current = np.hstack((
-            solver(lambda x: shooting(myode,x,par0),u_old[:-1]).x,
-            par0[vary_par]
-            )) 
-        
-    elif solve_for == 'equilibria': # Solve for equilibria using chosen root finding method
-        u_old = np.hstack((
-            solver(lambda x: myode(x,None,par0),x0).x,
-            par0[vary_par]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
-        ))
-        par0[vary_par] += step_size
-        u_current = np.hstack((
-            solver(lambda x: myode(x,None,par0),u_old[:-1]).x,
-            par0[vary_par]
-        ))
-    
-    else:
-        raise ValueError('solve_for not recognised, please choose from equilibria or limit_cycle')
-    
-    return [u_old,u_current]
 
 def continuation(myode,x0,par0,vary_par=0,step_size=0.1,max_steps=50,solve_for = 'equilibria', method='pArclength',solver=root):
     

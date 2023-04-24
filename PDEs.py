@@ -1,4 +1,4 @@
-#%%
+
 import numpy as  np
 from math import floor
 import types
@@ -367,8 +367,6 @@ def diffusion_solver(grid,
                                     U+C*b(t)+dt*q(x,t-dt,U)) # Solve for u_n+1 using implicit method
             u[:,n+1] = U # Store solution
 
-
-
     else:
         raise ValueError('Method not recognised.')
     
@@ -382,15 +380,26 @@ def diffusion_solver(grid,
 
 #%%
 
-grid = Grid(N=10, a=0, b=10)
-bc_left = BoundaryCondition('dirichlet', [5], grid)
-bc_right = BoundaryCondition('dirichlet', [10], grid)
-q2 = lambda x,t,u: 5*x**2 + t - np.sin(u)
 
-result = diffusion_solver(grid,bc_left,bc_right,IC=0,D=1,q=q2,dt=0.1,t_steps=1000,method='IMEX',storage='dense')
+class diffusion_solver():
 
-u2 = result.u
-x2 = result.x
-t_span2 = result.t
+    def __init__(self,grid, bc_left, bc_right,IC,D,q):
+        
+        self.grid = grid
+        self.bc_left = bc_left
+        self.bc_right = bc_right
+        self.IC = IC
+        self.D = D
+        self.q = q
 
-# %%
+    def explicit_euler(self,**kwargs):
+        q,D,mu,dt,t_steps = kwargs
+        pass
+    def method_of_lines(self,**kwargs):
+        pass
+    def implicit_euler(self,**kwargs):
+        pass
+    def crank_nicolson(self,**kwargs):
+        pass
+    def IMEX(self,**kwargs):
+        pass
