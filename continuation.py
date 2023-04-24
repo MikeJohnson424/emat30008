@@ -214,7 +214,12 @@ def continuation(myode,x0,par0,vary_par=0,step_size=0.1,max_steps=50,solve_for =
         u_old = u_current
         u_current = u_true
 
-    return u
+    class result():
 
-# %%
+        def __init__(self,u,alpha):
+            
+                self.u = u
+                self.alpha = alpha
+
+    return result(u[:-1,:],u[-1,:])
 
