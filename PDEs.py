@@ -1,5 +1,4 @@
 #%%
-
 import numpy as  np
 from math import floor
 import types
@@ -8,6 +7,7 @@ import scipy.sparse as sp
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+
 
 def gen_diag_mat(N,entries):
 
@@ -303,7 +303,7 @@ def diffusion_solver(grid,
     
     # Check if time-step restriction is violated, if so adjust dt and print warning.
 
-    if method in ('explicit-euler','lines','IMEX') and dt>0.5*dx**2/D: 
+    if method in ('explicit-euler','lines') and dt>0.5*dx**2/D: 
         print('Warning: Time-step restriction violated, dt has been adjusted to ensure stability.')
         dt = 0.5*dx**2/D
 
@@ -331,7 +331,6 @@ def diffusion_solver(grid,
 
         for n in range(t_steps):
 
-            dt = 0.5*dx**2/D # Recalculate dt to ensure stability
             t = dt*n # Current time
             U = U + dt*du_dt(U, t, [A, b, q, D, dx, x])
             u[:,n+1] = U # Store solution
@@ -360,7 +359,15 @@ def diffusion_solver(grid,
             u[:,n+1] = U # Store solution
 
     elif method == 'IMEX':
-        pass
+
+        for n in range(t_steps):
+
+            t = n*dt+dt # Time at next time-level
+            U = non_linear_solver( gen_eye(len(U))-C*A ,
+                                    U+C*b(t)+dt*q(x,t-dt,None)) # Solve for u_n+1 using implicit method
+            u[:,n+1] = U # Store solution
+
+
 
     else:
         raise ValueError('Method not recognised.')
@@ -373,27 +380,5 @@ def diffusion_solver(grid,
 
     return result(u,x,np.linspace(0,t_final,t_steps+1))
 
-#%%
-
-grid = Grid(N=10, a=0, b=1)
-bc_left = BoundaryCondition('dirichlet', [5], grid)
-bc_right = BoundaryCondition('dirichlet', [10], grid)
-t_steps = 1000
-x = grid.x
-
-result = diffusion_solver(grid,
-                    bc_left,
-                    bc_right,
-                    IC = 0,
-                    D=0.1,
-                    q=1,
-                    dt=0.1,
-                    t_steps=t_steps,
-                    method='explicit-euler',
-                    storage = 'sparse')
-
-u = result.u
-x = result.x
-t_span = result.t
 
 # %%

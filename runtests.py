@@ -59,7 +59,7 @@ class TestIntegrationMethods(unittest.TestCase):
 
     def test_solve_to(self): # Test for solving a function f(x) = x to a specified time using both forward euler and fourth order runge-kutta 
         x0 = [1]
-        t = 1
+        t = [0,1]
         deltat_max = 0.0001
         expected = np.e
 

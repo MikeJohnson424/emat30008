@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from functions import PPM
 from PDEs import construct_A_and_b, Grid, BoundaryCondition
+from scipy.integrate import solve_ivp
 
 
 def shooting(func,init,parameters):
@@ -19,47 +20,43 @@ def shooting(func,init,parameters):
     
     return np.hstack((x_0 - x_T, dxdt_0))
 
+#%%
 
 
-def solve_BVP(func,bc_left,bc_right,parameters,T,method = 'shooting',grid= None):
+def BVP(init,BC,func,parameters):
 
-
-    if not(bc_left.value == 'dirichlet' and bc_right.value == 'dirichlet'):
-        raise ValueError('Both boundary conditions must be dirichlet')
-    x0 = bc_left.value[0]
-    x_final = bc_right.value[0]
+    x0 = init[:-1]
+    T = init[-1]
     
+    x_final = solve_ivp(lambda t,x: func(x,None,parameters),[0,T],x0).y[:,-1]
 
-    if grid.left != 0:
-        raise ValueError('grid.right must be 0')
+    R1 = x_final - x0
 
-    if method == 'shooting':
-
-        def shooting(func,IC,x_final,parameters):
-            return solve_to(func,IC,[0,T],parameters).x[:,-1] - x_final
-        
-        sol = root(lambda x: shooting(func,x,x_final,parameters),x0)
-    
-    elif method == 'finite-difference':
-
-        [A, b] = construct_A_and_b(grid,bc_left,bc_right)
-
-        u = np.linalg.solve(A,-b(t)-dx**2/D*q(grid.x[1:-1]))
-
+    if BC == x0:
+        R2 = func(x0,0,parameters)[0]
     else:
-        raise ValueError('method must be either shooting or finite-difference')
+        R2 = T-T
+
+    return np.array([R1,R2])
+
+def shooting(func,init,parameters,BC):
+
+    root(lambda x: shooting(init, BC, func, parameters),init).x
+    
+    return 
+
+solution = shooting(PPM,[0.5,0.3,25],[1,0.1,0.1],[0.5,0.3,25])
 
 
 
+
+
+#%%
 
 def find_lim_cycle_conditions(func,init,parameters):
 
     lim_cycle_initial_conditions = root(lambda x: shooting(func,x,parameters),init).x
 
     return lim_cycle_initial_conditions
-
-# %%
-
-
 
 # %%

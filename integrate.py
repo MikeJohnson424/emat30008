@@ -71,11 +71,11 @@ def solve_to(func, x0, t, parameters=[], deltat_max=0.01, method = 'RK4'):
     Parameters
     ----------
     func : function
-        The ODE to solve to time t from time = 0.
+        The ODE to solve to time t from time = 0. Must be of the form func(x,t,parameters) where x,parameters are python lists.
     x0 : Python List
         Initial conditions for ODE system
     t : Python list
-        Integrate from t[0] to t[1]
+        List containing two values, t0 and t1, defining the time range to solve over.
     deltat_max : Float
         Defines the maximum time step to be used in the integration
     method : String
@@ -87,8 +87,7 @@ def solve_to(func, x0, t, parameters=[], deltat_max=0.01, method = 'RK4'):
     a numpy array containing solution across time to ODE system given x0.
     """
 
-
-    t0,t1 = t
+    t0,t1 = t # Unpack t
 
     # Define stepper function to be used in integration, return ValueError if method not recognised:
 
