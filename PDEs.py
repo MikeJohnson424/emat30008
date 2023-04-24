@@ -364,7 +364,7 @@ def diffusion_solver(grid,
 
             t = n*dt+dt # Time at next time-level
             U = non_linear_solver( gen_eye(len(U))-C*A ,
-                                    U+C*b(t)+dt*q(x,t-dt,None)) # Solve for u_n+1 using implicit method
+                                    U+C*b(t)+dt*q(x,t-dt,U)) # Solve for u_n+1 using implicit method
             u[:,n+1] = U # Store solution
 
 
@@ -380,5 +380,17 @@ def diffusion_solver(grid,
 
     return result(u,x,np.linspace(0,t_final,t_steps+1))
 
+#%%
+
+grid = Grid(N=10, a=0, b=10)
+bc_left = BoundaryCondition('dirichlet', [5], grid)
+bc_right = BoundaryCondition('dirichlet', [10], grid)
+q2 = lambda x,t,u: 5*x**2 + t - np.sin(u)
+
+result = diffusion_solver(grid,bc_left,bc_right,IC=0,D=1,q=q2,dt=0.1,t_steps=1000,method='IMEX',storage='dense')
+
+u2 = result.u
+x2 = result.x
+t_span2 = result.t
 
 # %%

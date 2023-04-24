@@ -64,18 +64,31 @@ class TestIntegrationMethods(unittest.TestCase):
         expected = np.e
 
         method = 'forward_euler'
-        result = solve_to(f, x0, t, [], deltat_max, method)
+        result = solve_to(f, x0, [0,t], [], deltat_max, method)
 
         self.assertEqual(len(result.t_space), len(result.x[0]), msg="Time array dimensions do not match solution dimensions")
         self.assertAlmostEqual(result.t_space[-1], t, msg="Final time in t_space does not match time specified by user")
         self.assertAlmostEqual(result.x[0,-1],expected, places = 3,msg="Solution does not match expected solution")
 
         method = 'RK4'
-        result = solve_to(f, x0, t, [], deltat_max, method)
+        result = solve_to(f, x0, [0,t], [], deltat_max, method)
 
         self.assertEqual(len(result.t_space), len(result.x[0]),msg= "Time array dimensions do not match solution dimensions")
         self.assertAlmostEqual(result.t_space[-1], t, msg="Final time in t_space does not match time specified by user")
-        self.assertAlmostEqual(result.x[0,-1],expected, places = 8,msg="Solution does not match expected solution")
+
+        # Test hopf normal form
+
+        beta = 10
+        theta = 0
+        result = solve_to(func=hopf_normal_form, x0=[np.pi, 0], t=[0, 20], parameters=[beta, -1], deltat_max=0.1, method='RK4')
+        x = result.x
+        t = result.t_space
+        x1_expected = np.sqrt(beta) * np.cos(t+theta)
+        x2_expected = np.sqrt(beta) * np.sin(t+theta)
+        x_expected = np.array([x1_expected, x2_expected])
+        np.testing.assert_array_almost_equal(x, x_expected)
+
+
 
 
     def test_solve_to_errors(self): # Test if solve_to raises correct errors
@@ -84,9 +97,9 @@ class TestIntegrationMethods(unittest.TestCase):
         deltat_max = 0.0001
         method = 'forward_euler'
         with self.assertRaises(ValueError): # Test if solve_to raises error if time is negative
-            solve_to(f, x0, t, [], deltat_max, method)
+            solve_to(f, x0, [-5,t], [], deltat_max, method)
         with self.assertRaises(ValueError):
-            solve_to(f, x0, t, [], deltat_max, 'Unrecognised method') # Test if solve_to raises error if method is not recognised
+            solve_to(f, x0, [0,5], [], deltat_max, 'Unrecognised method') # Test if solve_to raises error if method is not recognised
 
 # Class for testing supporting functions to continuation, solve_to and diffusion_solver
 
@@ -281,6 +294,13 @@ class TestDiffusionSolver(unittest.TestCase):
         pass
     # BVP test: constant or function AND dirichlet, neumann, robin etc.
     
+class TestContinuation(unittest.TestCase):
+
+    pass
+
+class TestShooting(unittest.TestCase):
+
+    pass
 
 
       

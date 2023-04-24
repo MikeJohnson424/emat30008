@@ -7,8 +7,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from functions import PPM
 from PDEs import construct_A_and_b, Grid, BoundaryCondition
-from scipy.integrate import solve_ivp
+import scipy
 
+
+#%%
 
 def shooting(func,init,parameters):
 
@@ -28,7 +30,7 @@ def BVP(init,BC,func,parameters):
     x0 = init[:-1]
     T = init[-1]
     
-    x_final = solve_ivp(lambda t,x: func(x,None,parameters),[0,T],x0).y[:,-1]
+    x_final = scipy.integrate.solve_ivp(lambda t,x: func(x,None,parameters),[0,T],x0).y[:,-1]
 
     R1 = x_final - x0
 
@@ -45,7 +47,7 @@ def shooting(func,init,parameters,BC):
     
     return 
 
-solution = shooting(PPM,[0.5,0.3,25],[1,0.1,0.1],[0.5,0.3,25])
+#solution = shooting(PPM,[0.5,0.3,25],[1,0.1,0.1],[0.5,0.3,25])
 
 
 
