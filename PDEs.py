@@ -1,4 +1,5 @@
 
+#%%
 import numpy as  np
 from math import floor
 import types
@@ -111,7 +112,7 @@ def BoundaryCondition(bcon_type, value,grid):
     elif bcon_type == 'neumann':
         if not isinstance(value, list) or not all(isinstance(x, (int, float, types.FunctionType)) for x in value):
             raise TypeError('Neumann boundary condition requires a list containing an integer, float, or function f(t).')
-        A_entry = [-2,2]
+        A_entry = [2,-2]
 
     elif bcon_type == 'robin':
         if not(type(value) == list and len(value) == 2):
@@ -157,8 +158,9 @@ def construct_A_and_b(grid,bc_left,bc_right,storage_type = 'dense'):
     # Update A and b according to boundary conditions
 
     A[0,:2] = bc_left.A_entry
-    A_entry_right = bc_right.A_entry;A_entry_reversed = A_entry_right[::-1]
-    A[-1,-2:] = A_entry_reversed
+    A_entry_right = bc_right.A_entry
+    A_entry_reversed = A_entry_right[::-1]
+    A[-1,-2:] = bc_right.A_entry
 
     if bc_left.type == 'dirichlet':
         A = A[1:,1:]

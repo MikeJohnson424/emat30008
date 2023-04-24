@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from functions import PPM
 from PDEs import construct_A_and_b, Grid, BoundaryCondition
 import scipy
+import types
 
 
 #%%
@@ -21,9 +22,6 @@ def lim_cycle_conditions(func,init,parameters):
     dxdt_0 = func(x_0,0,parameters)[0]
     
     return np.hstack((x_0 - x_T, dxdt_0))
-
-#%%
-
 
 def shooting(func,init,parameters,solver):
       
@@ -75,6 +73,8 @@ def BVP_solver(grid,bc_left,bc_right,IC,q,D,u_guess = None):
         Source term in reaction-diffusion equation.
     D: float or int
         Diffusion coefficient
+    u_guess: float, int or function of x
+        Initial guess for solution to if a non-linear source term is present
     Returns
     -------
     Returns a an object with attributes:
@@ -86,20 +86,30 @@ def BVP_solver(grid,bc_left,bc_right,IC,q,D,u_guess = None):
     dx = grid.dx
     x = grid.x
     t = None # T dependance not relevant in BVPs for time invariant diffusion equation
-    
-    # Initialise u_guess if not provided by user
-
-    if u_guess == None:
-        u_guess = np.zeros(len(x))
 
     # Adjust size of grid and u_guess if boundary conditions are dirichlet
 
     if bc_left.type == 'dirichlet':
         x = x[1:]
-        u_guess = u_guess[1:]
     if bc_right.type == 'dirichlet':
         x = x[:-1]
-        u_guess = u_guess[:-1]
+
+    # Initialise u_guess if not provided by user
+
+    if isinstance(u_guess,type(None)):
+        u_guess = np.zeros(len(x))
+    elif type(u_guess) in (int,float):
+        u_guess = u_guess*np.ones(len(x))
+    elif isinstance(u_guess,types.FunctionType):
+        u_guess = u_guess(x)
+    else:
+        raise TypeError('u_guess must be a float, int or function')
+
+    # If q entered as float or int, convert to function
+        
+    if not isinstance(q,types.FunctionType):
+        source = q
+        q = lambda x,u: source
 
     A,b = construct_A_and_b(grid,bc_left,bc_right)
 
@@ -107,11 +117,15 @@ def BVP_solver(grid,bc_left,bc_right,IC,q,D,u_guess = None):
 
     if q(1,1) != q(1,2):
         sol = scipy.optimize.root(lambda u: D/dx**2*(A@u+b(t))+q(x,u),u_guess)
+        if not sol.success:
+            raise RuntimeError('Solver failed to converge, please choose a better guess for u')
+        else:
+            u = sol.x
+
     else:
         u = np.linalg.solve(A,-b(None)-dx**2/D*q(x,None))
 
-    if not sol.success:
-        raise RuntimeError('Solver failed to converge, please choose a better guess for u')
+    
 
     class result():
 
@@ -122,19 +136,16 @@ def BVP_solver(grid,bc_left,bc_right,IC,q,D,u_guess = None):
 
     return result(u,x)
 
-
-
 # %%
 
-grid = Grid(100,0,1)
-bc_left = BoundaryCondition('dirichlet',[0],grid)
-bc_right = BoundaryCondition('dirichlet',[0],grid)
-u_guess = np.zeros(len(grid.x))
+grid = Grid(5,0,1)
+bc_left = BoundaryCondition('neumann',[2],grid)
+bc_right = BoundaryCondition('dirichlet',[5],grid)
 IC = lambda x: 0
-q = lambda x,u: 1 + u
+q = lambda x,u: 0
 D = 1
 
-result = BVP_solver(grid,bc_left,bc_right,IC,q,D)
+result = BVP_solver(grid,bc_left,bc_right,IC,q,D,5)
 u = result.u
 x = result.x
 plt.plot(x,u)

@@ -4,7 +4,7 @@
 import unittest
 from integrate import solve_to, RK4_step, euler_step
 from functions import*
-import BVP
+from BVP import lim_cycle_conditions, shooting, BVP_solver
 import unittest
 import numpy as np
 from math import isclose
@@ -260,6 +260,9 @@ class TestComplementaryFunctions(unittest.TestCase):
         np.testing.assert_array_almost_equal(u_old, expected_u_old, decimal=6)
         np.testing.assert_array_almost_equal(u_current, expected_u_current, decimal=6)
     
+    def test_lim_cycle_condition(self):
+        pass
+
 class TestDiffusionSolver(unittest.TestCase):
     
     def setUp(self):
@@ -296,9 +299,8 @@ class TestDiffusionSolver(unittest.TestCase):
     
 class TestContinuation(unittest.TestCase):
 
-    test
 
-class TestShooting(unittest.TestCase):
+class TestOdeBVP(unittest.TestCase):
 
     pass
 
