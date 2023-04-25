@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from BVP import lim_cycle_conditions, shooting
 from scipy.optimize import root
 from functions import PPM, h
+from scipy.integrate import solve_ivp
 
 
 def gen_sol_mat(x_dim,max_steps):
@@ -55,13 +56,19 @@ def find_initial_solutions(solver,myode,x0,par0,vary_par,step_size,solve_for):
     # Solve for chosen solution and concatenate with parameter value being varied
 
     if solve_for == 'limit_cycle': # Solve for limit cycle conditions using shooting method
+        #solution1 = shooting(myode,x0,par0,solver)
         u_old = np.hstack((
             solver(lambda x: lim_cycle_conditions(myode,x,par0),x0).x,
+            #solution1.x,
+            #solution1.T,
             par0[vary_par]
         ))   
         par0[vary_par] += step_size 
+        #solution2 = shooting(myode,u_old[:-1],par0,solver)
         u_current = np.hstack((
             solver(lambda x: lim_cycle_conditions(myode,x,par0),u_old[:-1]).x,
+            #solution2.x,
+            #solution2.T,
             par0[vary_par]
             )) 
         
