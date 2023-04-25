@@ -270,6 +270,9 @@ def diffusion_solver(grid,
         Array of grid points.
     """
     
+    if bc_left and bc_right in ('neumann'):
+        raise ValueError('Double Neumann boundary conditions has no unique solution, terminating program.')
+
     dx = grid.dx # Grid spacing
     x = grid.x # Array of grid points
     C = dt*D/dx**2 
@@ -329,7 +332,7 @@ def diffusion_solver(grid,
     if bc_right.type == 'dirichlet':
         u = u[1:]; x = x[:-1] 
 
-    U = u[:,0] # Set old solution as initial condition
+    U = u[:,0] # Set solution at t = 0 as initial condition
 
     # Solve for solution using chosen method
 
@@ -343,7 +346,6 @@ def diffusion_solver(grid,
 
     elif method == 'lines':
 
-        #u = solve_to(du_dt, U, t = [0,t_final],parameters=[A,b,q,D,dx,x],deltat_max = dt).x
         u = solve_ivp(lambda t,x: du_dt(x,t,[A, b, q, D, dx, x]),[0,t_final],U).y
 
     elif method == 'implicit-euler':
@@ -352,7 +354,7 @@ def diffusion_solver(grid,
 
             t = n*dt+dt # Time at next time-level
             U = non_linear_solver( gen_eye(len(U))-C*A ,
-                                    U+C*b(t)+dt*q(x,t,None)) # Solve for u_n+1 using implicit method
+                                    U+C*b(t)+dt*q(x,t,None)) # Solve for u(x,t + dt) using matrix equation solver
             u[:,n+1] = U # Store solution
 
     elif method == 'crank-nicolson':
@@ -371,7 +373,7 @@ def diffusion_solver(grid,
 
             t = n*dt+dt # Time at next time-level
             U = non_linear_solver( gen_eye(len(U))-C*A ,
-                                    U+C*b(t)+dt*q(x,t-dt,U)) # Solve for u_n+1 using implicit method
+                                    U+C*b(t)+dt*q(x,t-dt,U)) # Solve for u_n+1 using IMEX method
             u[:,n+1] = U # Store solution
 
     else:

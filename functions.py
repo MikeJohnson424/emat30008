@@ -29,6 +29,7 @@ def PPM(x,t=None,parameters = [1,0.2,0.1]): # Define predator-prey model
 
 
 def hopf_normal_form(x, t=None, parameters = [1,-1]): # Define hopf normal form
+    
     beta, sigma = parameters
     x1,x2 = x
     dx1_dt = beta*x1-x2+sigma*x1*(x1**2+x2**2)

@@ -4,7 +4,7 @@ from PDEs import Grid, BoundaryCondition
 
 
 
-def profile_BVP_solver(grid,bc_left,bc_right,IC,q,D,u_guess=None):
+def profile_BVP_solver(grid,bc_left,bc_right,q,D,u_guess=None):
     # Create a cProfile.Profile object
     pr = cProfile.Profile()
 
@@ -12,7 +12,7 @@ def profile_BVP_solver(grid,bc_left,bc_right,IC,q,D,u_guess=None):
     pr.enable()
 
     # Call the BVP_solver function
-    result = BVP_solver(grid,bc_left,bc_right,IC,q,D,u_guess)
+    result = BVP_solver(grid,bc_left,bc_right,q,D,u_guess)
 
     # Stop profiling
     pr.disable()
@@ -30,4 +30,4 @@ grid = Grid(100,0,1)
 bc_left = BoundaryCondition('dirichlet',[-0],grid)
 bc_right = BoundaryCondition('dirichlet',[0],grid)
 
-profile_BVP_solver(grid,bc_left,bc_right,IC=0,q=1,D=1)
+profile_BVP_solver(grid,bc_left,bc_right,q=1,D=1)

@@ -1,5 +1,4 @@
 
-#%%
 
 from scipy.optimize import fsolve, root
 from scipy.integrate import solve_ivp
@@ -56,7 +55,7 @@ def shooting(func,init,parameters,solver):
 
     return result(x,T)
 
-def BVP_solver(grid,bc_left,bc_right,IC,q,D,u_guess = None):
+def BVP_solver(grid,bc_left,bc_right,q,D,u_guess = None):
 
     """
     A function to solve boundary value problems for the time-invariant diffusion equation.
@@ -68,8 +67,6 @@ def BVP_solver(grid,bc_left,bc_right,IC,q,D,u_guess = None):
         Object returned by BoundaryCondition function. Contains boundary condition type, value and A matrix entires.
     bc_right: object
         Object returned by BoundaryCondition function. Contains boundary condition type, value and A matrix entires.
-    IC: Float, int or function
-        Defines domain, x, at time t = 0.
     q: float, int or function q = q(x,u)
         Source term in reaction-diffusion equation.
     D: float or int
@@ -94,10 +91,10 @@ def BVP_solver(grid,bc_left,bc_right,IC,q,D,u_guess = None):
         x = x[1:]
     if bc_right.type == 'dirichlet':
         x = x[:-1]
-
+      
     # Initialise u_guess if not provided by user
 
-    if isinstance(u_guess,type(None)):
+    if isinstance(u_guess,types.NoneType):
         u_guess = np.zeros(len(x))
     elif type(u_guess) in (int,float):
         u_guess = u_guess*np.ones(len(x))
@@ -111,6 +108,10 @@ def BVP_solver(grid,bc_left,bc_right,IC,q,D,u_guess = None):
     if not isinstance(q,types.FunctionType):
         source = q
         q = lambda x,u: source
+    elif isinstance(q,types.FunctionType):
+        pass
+    else:
+        raise TypeError('q must be a float, int or function q(x,u)')
 
     A,b = construct_A_and_b(grid,bc_left,bc_right)
 
@@ -134,4 +135,3 @@ def BVP_solver(grid,bc_left,bc_right,IC,q,D,u_guess = None):
 
     return result(u,x)
 
-# %%

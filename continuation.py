@@ -33,7 +33,7 @@ def find_initial_solutions(solver,myode,x0,par0,vary_par,step_size,solve_for):
     ----------
     solver: function
         The solver to use. Code currently only support scipy.optimize.root.
-    my_ode: function
+    myode: function
         Function to perform continuation on.
     x0: ndarray
         The initial state.
@@ -129,23 +129,23 @@ def corrector(myode,u,vary_par,par0,solve_for,u_pred,delta_u):
 
     Parameters
     ----------
-    my_ode: function
+    myode: function
         Function to perform continuation on.
     u: ndarray
         The variable to solve for as part of the corrector stage.
-    u_pred: ndarray
-        The predicted solution and the predicted value of the parameter being varied.
-    delta_u: ndarray
-        The difference between the current and previous solutions and the difference between the current and previous values of the parameter being varied.
     vary_par: int
         The index of the parameter being varied.
     par0: ndarray
         The array of parameters.
     solve_for: str
         Choose from 'equilibria' or 'limit_cycle'. If 'equilibria' is chosen, the function will solve for equilibria. If 'limit_cycle' is chosen, the function will solve for limit cycle conditions.
+    u_pred: ndarray
+        The predicted solution and the predicted value of the parameter being varied.
+    delta_u: ndarray
+        The difference between the current and previous solutions and the difference between the current and previous values of the parameter being varied.
     Returns
     -------
-    Returns a ndarray containing output of my_ode and the dot product between (u-u_pred) and delta_u given array u.
+    Returns a ndarray containing output of myode and the dot product between (u-u_pred) and delta_u given array u.
     """
 
     par0[vary_par] = u[-1] # Parameter is last entry in u
@@ -166,7 +166,7 @@ def continuation(myode,x0,par0,vary_par=0,step_size=0.1,max_steps=50,solve_for =
 
     Parameters
     ----------
-    my_ode: function
+    myode: function
         Function to perform continuation on.
     x0: ndarray
         Guess for initial solution. If solve_for is 'equilibria', x0 should be a guess for the equilibrium. 
@@ -189,7 +189,10 @@ def continuation(myode,x0,par0,vary_par=0,step_size=0.1,max_steps=50,solve_for =
         
     Returns
     -------
-    Returns a matrix containing the solution and varying parameter.
+    result.u: ndarray
+        Array of solution values
+    result.alpha: ndarray
+        Array of parameter values
     """
 
     x_dim = len(x0) # Dimension of the solution

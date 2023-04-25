@@ -37,8 +37,6 @@ Speed: Tests should run quickly to provide fast feedback to developers. This can
 
 """
 
-
-
 class TestIntegrationMethods(unittest.TestCase):
 
     def test_euler_step(self): # Test for euler stepping a function f(x) = x
@@ -294,6 +292,8 @@ class TestDiffusionSolver(unittest.TestCase):
         pass
     def test_crank_nicolson(self):
         pass
+    def test_IMEX(self):
+        pass
     # BVP test: constant or function AND dirichlet, neumann, robin etc.
     
 class TestContinuation(unittest.TestCase):
@@ -301,7 +301,20 @@ class TestContinuation(unittest.TestCase):
 
 class TestOdeBVP(unittest.TestCase):
 
-    pass
+    def test_non_linear_source_term(self):
+        pass
+
+    def test_linear_source_term(self):
+        pass
+
+    def test_robin_boundary_condition(self):
+        pass
+
+    def test_dirichlet_boundary_condition(self):
+        pass
+
+    def test_neumann_boundary_condition(self):
+        pass
 
 
       
