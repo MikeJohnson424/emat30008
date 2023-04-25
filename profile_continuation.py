@@ -1,4 +1,4 @@
-import cProfile, pstats, io
+import cProfile, pstats
 from continuation import continuation
 from functions import PPM
 import numpy as np
@@ -27,7 +27,7 @@ def profile_continuation(myode, x0, par0, vary_par=0, step_size=0.1, max_steps=5
     # Return the result from continuation
     return result
 
-# Example usage:
+
 x0 = np.array([0.5, 0.5])
 par0 = np.array([1, 0.2, 0.1])
 vary_par = 0
