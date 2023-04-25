@@ -1,4 +1,5 @@
 
+#%%
 import numpy as  np
 from math import floor
 import types
@@ -286,8 +287,7 @@ def diffusion_solver(grid,
     # Check for non-linear source term, if detected then switch method to IMEX
 
     if q(1,1,1) != q(1,1,0) and method in ('implicit-euler','crank-nicolson'):
-        print('Warning: Non-linear source term detected, method is now IMEX.')
-        method = 'IMEX'
+        raise ValueError('Non-linear source term detected, method must be IMEX, explicit-euler or lines.')
 
     # Adjust functions for solving matrix equations, generating identity matrix and matrix multiplication depending on storage type.
 
@@ -304,7 +304,7 @@ def diffusion_solver(grid,
     
     # Check if time-step restriction is violated, if so adjust dt and print warning.
 
-    if method in ('explicit-euler','lines') and dt>0.5*dx**2/D: 
+    if method in ('explicit-euler') and dt>0.5*dx**2/D: 
         print('Warning: Time-step restriction violated, dt has been adjusted to ensure stability.')
         dt = 0.5*dx**2/D
 
@@ -338,7 +338,8 @@ def diffusion_solver(grid,
 
     elif method == 'lines':
 
-        u = solve_to(du_dt, U, t = [0,t_final],parameters=[A,b,q,D,dx,x],deltat_max = dt).x
+        #u = solve_to(du_dt, U, t = [0,t_final],parameters=[A,b,q,D,dx,x],deltat_max = dt).x
+        u = solve_ivp(lambda t,x: du_dt(x,t,[A, b, q, D, dx, x]),[0,t_final],U).y
 
     elif method == 'implicit-euler':
 
@@ -380,27 +381,16 @@ def diffusion_solver(grid,
     return result(u,x,np.linspace(0,t_final,t_steps+1))
 
 #%%
+t_steps = 1000
 
+# problem 1
 
-class diffusion_solver():
+grid = Grid(N=10, a=0, b=1)
+bc_left = BoundaryCondition('dirichlet', [lambda t: np.sin(t)], grid)
+bc_right = BoundaryCondition('neumann', [2], grid)
+IC = lambda x: np.sin(2*np.pi*x)
 
-    def __init__(self,grid, bc_left, bc_right,IC,D,q):
-        
-        self.grid = grid
-        self.bc_left = bc_left
-        self.bc_right = bc_right
-        self.IC = IC
-        self.D = D
-        self.q = q
-
-    def explicit_euler(self,**kwargs):
-        q,D,mu,dt,t_steps = kwargs
-        pass
-    def method_of_lines(self,**kwargs):
-        pass
-    def implicit_euler(self,**kwargs):
-        pass
-    def crank_nicolson(self,**kwargs):
-        pass
-    def IMEX(self,**kwargs):
-        pass
+result = diffusion_solver(grid,bc_left,bc_right,IC,D=1,q=2,dt=0.1,t_steps=1000,method='implicit-euler',storage='sparse')
+# %%
+plt.plot(result.x,result.u[:,-1])
+# %%

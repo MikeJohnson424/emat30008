@@ -1,6 +1,4 @@
 
-#%%
-
 from scipy.optimize import fsolve, root
 from scipy.integrate import solve_ivp
 from integrate import solve_to
@@ -11,8 +9,6 @@ from PDEs import construct_A_and_b, Grid, BoundaryCondition
 import scipy
 import types
 
-
-#%%
 
 def lim_cycle_conditions(func,init,parameters):
 
@@ -135,39 +131,3 @@ def BVP_solver(grid,bc_left,bc_right,IC,q,D,u_guess = None):
                 self.x = x
 
     return result(u,x)
-
-# %%
-
-# grid = Grid(50,0,1)
-# bc_left = BoundaryCondition('dirichlet',[2],grid)
-# bc_right = BoundaryCondition('dirichlet',[5],grid)
-# IC = lambda x: 0
-# q = lambda x,u: u
-# D = 1
-
-# result = BVP_solver(grid,bc_left,bc_right,IC,q,D,5)
-# u = result.u
-# x = result.x
-# plt.plot(x,u)
-
-PPM_lim_cycle = shooting(PPM,[0.5,0.5,20],[1,0.1,0.1],root)
-x=PPM_lim_cycle.x
-t = PPM_lim_cycle.T
-
-
-#%%
-hopf_lim_cycle = shooting(hopf_normal_form,[10,10,np.pi],[1,-1],root)    
-x = hopf_lim_cycle.x
-t = hopf_lim_cycle.T
-
-#result = solve_to(hopf_normal_form,x,[0,t],[1,5])
-# x = result.x
-# t_space = result.t_space
-
-result = solve_ivp(lambda t,x: hopf_normal_form(x,t,[1,-1]),[0,100],x)
-plt.plot(result.t,result.y[0])
-
-
-
-
-# %%
