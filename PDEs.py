@@ -8,6 +8,7 @@ import scipy.sparse as sp
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from typing import Callable, List,Union
 
 
 def gen_diag_mat(N,entries):
@@ -21,8 +22,6 @@ def gen_diag_mat(N,entries):
         Size of matrix is NxN
     entries : Python list
         Entries to be placed on the diagonals of the matrix.
-    storage_type : String
-        Determines the storage type of the matrix. Can be 'dense' or 'sparse'.
 
     Returns
     -------
@@ -100,34 +99,40 @@ def BoundaryCondition(bcon_type, value,grid):
     Returns a class containing the modified A entry, value and type of boundary condition.
     """
 
-    dx = grid.dx # Grid spacing
+    dx = grid.dx
 
-    # Define the A matrix entries for each boundary condition, check for invalid inputs
-
-    if bcon_type == 'dirichlet':
-        if not isinstance(value, list) or not all(isinstance(x, (int, float, types.FunctionType)) for x in value) or len(value) != 1:
-            raise TypeError('Dirichlet boundary condition requires a list containing an integer, float, or function f(t).')
+    if bcon_type == "dirichlet":
+        if not isinstance(value, list) or not all(
+            isinstance(x, (int, float, Callable)) for x in value
+        ) or len(value) != 1:
+            raise TypeError(
+                "Dirichlet boundary condition requires a list containing an integer, float, or function f(t)."
+            )
         A_entry = [-2, 1]
 
-    elif bcon_type == 'neumann':
-        if not isinstance(value, list) or not all(isinstance(x, (int, float, types.FunctionType)) for x in value):
-            raise TypeError('Neumann boundary condition requires a list containing an integer, float, or function f(t).')
-        A_entry = [2,-2]
+    elif bcon_type == "neumann":
+        if not isinstance(value, list) or not all(
+            isinstance(x, (int, float, Callable)) for x in value
+        ):
+            raise TypeError(
+                "Neumann boundary condition requires a list containing an integer, float, or function f(t)."
+            )
+        A_entry = [2, -2]
 
-    elif bcon_type == 'robin':
-        if not(type(value) == list and len(value) == 2):
-            raise ValueError('Robin condition requires a list containing two values')
-        A_entry = [-2*(1+value[1]*dx), 2] # Value = [delta, gamma]
+    elif bcon_type == "robin":
+        if not (isinstance(value, list) and len(value) == 2):
+            raise ValueError("Robin condition requires a list containing two values")
+        A_entry = [-2 * (1 + value[1] * dx), 2]
     else:
-        raise ValueError('Boundary condition type not recognized')
+        raise ValueError("Boundary condition type not recognized")
 
     class BC:
-        def __init__(self,type,value, A_entry):
+        def __init__(self, type, value, A_entry):
             self.type = type
             self.value = value
             self.A_entry = A_entry
 
-    return BC(bcon_type,value, A_entry)
+    return BC(bcon_type, value, A_entry)
 
 def construct_A_and_b(grid,bc_left,bc_right,storage_type = 'dense'):
 
@@ -136,11 +141,11 @@ def construct_A_and_b(grid,bc_left,bc_right,storage_type = 'dense'):
 
     Parameters
     ----------
-    grid : Obj
+    grid : object
         Contains discretized array,x and grid spacing dx.
-    bc_left: Obj
+    bc_left: object
         Object returned by BoundaryCondition function. Contains boundary condition type, value and A matrix entires.
-    bc_right: Obj
+    bc_right: Object
         Object returned by BoundaryCondition function. Contains boundary condition type, value and A matrix entires.
     storage_type: Str
         Choose from dense or sparse to determine the nature of the A matrix.
@@ -218,13 +223,13 @@ def du_dt(u, t, parameters):  # Define explicit temporal derivative of u
 def diffusion_solver(grid, 
                     bc_left, 
                     bc_right,
-                    IC,
+                    initial_condition,
                     D,
                     q,
                     dt=10,
                     t_steps=20,
                     method='implicit-euler',
-                    storage = 'dense'):
+                    storage_type = 'dense'):
     
     """
     A function that iterates over a time-range using a chosen finite difference method
@@ -238,7 +243,7 @@ def diffusion_solver(grid,
         Object returned by BoundaryCondition function. Contains boundary condition type, value and A matrix entires.
     bc_right: object
         Object returned by BoundaryCondition function. Contains boundary condition type, value and A matrix entires.
-    IC: Float, int or function
+    initial_condition: Float, int or function
         Defines domain, x, at time t = 0.
     D: float or int
         Diffusion coefficient
@@ -268,7 +273,7 @@ def diffusion_solver(grid,
     dx = grid.dx # Grid spacing
     x = grid.x # Array of grid points
     C = dt*D/dx**2 
-    [A,b] = construct_A_and_b(grid,bc_left,bc_right,storage) # Construct A and b matrices
+    [A,b] = construct_A_and_b(grid,bc_left,bc_right,storage_type) # Construct A and b matrices
     u = np.zeros((len(grid.x),t_steps+1)) # Initialise array to store solutions
     t_final = dt*t_steps # Final time
 
@@ -291,11 +296,11 @@ def diffusion_solver(grid,
 
     # Adjust functions for solving matrix equations, generating identity matrix and matrix multiplication depending on storage type.
 
-    if storage == 'dense':
+    if storage_type == 'dense':
         non_linear_solver = np.linalg.solve
         gen_eye = np.eye
         mat_mul = np.matmul
-    elif storage == 'sparse':
+    elif storage_type == 'sparse':
         non_linear_solver = sp.linalg.spsolve
         gen_eye = sp.eye
         mat_mul = lambda A,b: A.dot(b)
@@ -310,10 +315,10 @@ def diffusion_solver(grid,
 
     # Impose initial condition on domain x at time t = 0
 
-    if isinstance(IC,types.FunctionType): 
-        u[:,0] = IC(x)
-    elif type(IC) in (float,int): 
-        u[:,0] = IC*np.ones(len(grid.x))
+    if isinstance(initial_condition,types.FunctionType): 
+        u[:,0] = initial_condition(x)
+    elif type(initial_condition) in (float,int): 
+        u[:,0] = initial_condition*np.ones(len(grid.x))
     else:
         raise TypeError('Initial condition must be some function f(x) or constant')
 
@@ -380,5 +385,3 @@ def diffusion_solver(grid,
 
     return result(u,x,np.linspace(0,t_final,t_steps+1))
 
-
-# %%
