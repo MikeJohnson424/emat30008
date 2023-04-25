@@ -380,3 +380,5 @@ def diffusion_solver(grid,
 
     return result(u,x,np.linspace(0,t_final,t_steps+1))
 
+
+# %%

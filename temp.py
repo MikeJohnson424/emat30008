@@ -1,3 +1,9 @@
+from PDEs import Grid,BoundaryCondition,diffusion_solver
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.animation import FuncAnimation
+import plotly.graph_objects as go
+
 """ FINITE DIFFERENCE PDEs """
 
 # Weeks 20,21,22
@@ -25,7 +31,7 @@ t_span = result.t
 
 """ ANIMATING SOLUTION """
 
-%matplotlib widget
+
 fig,ax = plt.subplots()
 
 line, = ax.plot(x,u[:,0])

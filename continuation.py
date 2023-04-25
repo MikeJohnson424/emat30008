@@ -1,9 +1,10 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from BVP import lim_cycle_conditions
+from BVP import lim_cycle_conditions, shooting
 from scipy.optimize import root
 from functions import PPM, h
+
 
 def gen_sol_mat(x_dim,max_steps):
 

@@ -1,4 +1,6 @@
 
+#%%
+
 from scipy.optimize import fsolve, root
 from scipy.integrate import solve_ivp
 from integrate import solve_to
@@ -131,3 +133,5 @@ def BVP_solver(grid,bc_left,bc_right,IC,q,D,u_guess = None):
                 self.x = x
 
     return result(u,x)
+
+# %%
