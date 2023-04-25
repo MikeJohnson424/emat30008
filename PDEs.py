@@ -1,5 +1,4 @@
 
-#%%
 import numpy as  np
 from math import floor
 import types
@@ -105,7 +104,7 @@ def BoundaryCondition(bcon_type, value,grid):
     # Define the A matrix entries for each boundary condition, check for invalid inputs
 
     if bcon_type == 'dirichlet':
-        if not isinstance(value, list) or not all(isinstance(x, (int, float, types.FunctionType)) for x in value):
+        if not isinstance(value, list) or not all(isinstance(x, (int, float, types.FunctionType)) for x in value) or len(value) != 1:
             raise TypeError('Dirichlet boundary condition requires a list containing an integer, float, or function f(t).')
         A_entry = [-2, 1]
 

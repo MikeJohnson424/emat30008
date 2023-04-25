@@ -2,7 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from BVP import lim_cycle_condition
+from BVP import lim_cycle_conditions
 from scipy.optimize import root
 from functions import PPM, h
 
@@ -55,14 +55,16 @@ def find_initial_solutions(solver,myode,x0,par0,vary_par,step_size,solve_for):
         Second solution.
     """
 
+    # Solve for chosen solution and concatenate with parameter value being varied
+
     if solve_for == 'limit_cycle': # Solve for limit cycle conditions using shooting method
         u_old = np.hstack((
-            solver(lambda x: lim_cycle_condition(myode,x,par0),x0).x,
+            solver(lambda x: lim_cycle_conditions(myode,x,par0),x0).x,
             par0[vary_par]
         ))   
         par0[vary_par] += step_size 
         u_current = np.hstack((
-            solver(lambda x: lim_cycle_condition(myode,x,par0),u_old[:-1]).x,
+            solver(lambda x: lim_cycle_conditions(myode,x,par0),u_old[:-1]).x,
             par0[vary_par]
             )) 
         
@@ -145,7 +147,7 @@ def corrector(myode,u,vary_par,par0,solve_for,u_pred,delta_u):
     par0[vary_par] = u[-1] # Parameter is last entry in u
 
     if solve_for == 'limit_cycle':
-        R1 = lim_cycle_condition(myode,u[:-1],par0)
+        R1 = lim_cycle_conditions(myode,u[:-1],par0)
         R2 = np.dot(u - u_pred, delta_u)
     else:
         R1 = myode(u[:-1],None,par0)

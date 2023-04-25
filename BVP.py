@@ -2,10 +2,11 @@
 #%%
 
 from scipy.optimize import fsolve, root
+from scipy.integrate import solve_ivp
 from integrate import solve_to
 import numpy as np
 import matplotlib.pyplot as plt
-from functions import PPM
+from functions import PPM, hopf_normal_form
 from PDEs import construct_A_and_b, Grid, BoundaryCondition
 import scipy
 import types
@@ -15,13 +16,13 @@ import types
 
 def lim_cycle_conditions(func,init,parameters):
 
-    x_0 = init[:-1]
+    x0 = init[:-1]
     T = init[-1]
-    sol = solve_to(func,x_0,[0,T],parameters) 
-    x_T = sol.x[:,-1]
-    dxdt_0 = func(x_0,0,parameters)[0]
+    sol = solve_ivp(lambda t, x: func(x,t,parameters),[0,T],x0)
+    x_T = sol.y[:,-1]
+    dxdt_0 = func(x0,0,parameters)[0]
     
-    return np.hstack((x_0 - x_T, dxdt_0))
+    return np.hstack((x0 - x_T, dxdt_0))
 
 def shooting(func,init,parameters,solver):
       
@@ -47,16 +48,18 @@ def shooting(func,init,parameters,solver):
     """
 
     sol = solver(lambda x: lim_cycle_conditions(func,x,parameters),init)
-
+    x = sol.x[:-1]
+    T = x[-1]
     class result():
          
-        def __init__(self,x):
-            self.x = x[:-1]
-            self.T = x[-1]
+        def __init__(self,x,T):
+            self.x = x
+            self.T = T
 
-    return result(sol)
+    return result(x,T)
 
 def BVP_solver(grid,bc_left,bc_right,IC,q,D,u_guess = None):
+
     """
     A function to solve boundary value problems for the time-invariant diffusion equation.
     Parameters
@@ -121,11 +124,8 @@ def BVP_solver(grid,bc_left,bc_right,IC,q,D,u_guess = None):
             raise RuntimeError('Solver failed to converge, please choose a better guess for u')
         else:
             u = sol.x
-
     else:
         u = np.linalg.solve(A,-b(None)-dx**2/D*q(x,None))
-
-    
 
     class result():
 
@@ -138,17 +138,35 @@ def BVP_solver(grid,bc_left,bc_right,IC,q,D,u_guess = None):
 
 # %%
 
-grid = Grid(5,0,1)
-bc_left = BoundaryCondition('neumann',[2],grid)
-bc_right = BoundaryCondition('dirichlet',[5],grid)
-IC = lambda x: 0
-q = lambda x,u: 0
-D = 1
+# grid = Grid(50,0,1)
+# bc_left = BoundaryCondition('dirichlet',[2],grid)
+# bc_right = BoundaryCondition('dirichlet',[5],grid)
+# IC = lambda x: 0
+# q = lambda x,u: u
+# D = 1
 
-result = BVP_solver(grid,bc_left,bc_right,IC,q,D,5)
-u = result.u
-x = result.x
-plt.plot(x,u)
+# result = BVP_solver(grid,bc_left,bc_right,IC,q,D,5)
+# u = result.u
+# x = result.x
+# plt.plot(x,u)
+
+PPM_lim_cycle = shooting(PPM,[0.5,0.5,20],[1,0.1,0.1],root)
+x=PPM_lim_cycle.x
+t = PPM_lim_cycle.T
+
+
+#%%
+hopf_lim_cycle = shooting(hopf_normal_form,[10,10,np.pi],[1,-1],root)    
+x = hopf_lim_cycle.x
+t = hopf_lim_cycle.T
+
+#result = solve_to(hopf_normal_form,x,[0,t],[1,5])
+# x = result.x
+# t_space = result.t_space
+
+result = solve_ivp(lambda t,x: hopf_normal_form(x,t,[1,-1]),[0,100],x)
+plt.plot(result.t,result.y[0])
+
 
 
 

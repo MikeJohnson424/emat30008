@@ -98,10 +98,18 @@ def solve_to(func, x0, t, parameters=[], deltat_max=0.01, method = 'RK4'):
     else:
         raise ValueError("Method must be either 'forward_euler' or 'RK4'")
 
-    # Check for negative input in time and throw error:
+    # Check for invalid time inputs
 
-    if t0 < 0:
-        raise ValueError("Time cannot be negative!") 
+    if t0 < 0 or t1 < 0:
+        raise ValueError("Time cannot be negative")
+    elif t0 >= t1:
+        raise ValueError("t1 must be greater than t0")
+    else: pass
+
+    # Check for invalid deltat_max input:
+
+    if deltat_max > t1-t0:
+        raise ValueError("deltat_max must be less than t1-t0")
 
     # Define arrays to store solution and iterate over time:
 
