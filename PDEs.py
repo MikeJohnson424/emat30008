@@ -380,17 +380,3 @@ def diffusion_solver(grid,
 
     return result(u,x,np.linspace(0,t_final,t_steps+1))
 
-#%%
-t_steps = 1000
-
-# problem 1
-
-grid = Grid(N=10, a=0, b=1)
-bc_left = BoundaryCondition('dirichlet', [lambda t: np.sin(t)], grid)
-bc_right = BoundaryCondition('neumann', [2], grid)
-IC = lambda x: np.sin(2*np.pi*x)
-
-result = diffusion_solver(grid,bc_left,bc_right,IC,D=1,q=2,dt=0.1,t_steps=1000,method='implicit-euler',storage='sparse')
-# %%
-plt.plot(result.x,result.u[:,-1])
-# %%

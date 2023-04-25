@@ -102,7 +102,6 @@ class TestIntegrationMethods(unittest.TestCase):
             solve_to(f, x0, [0,5], [], deltat_max, 'Unrecognised method') # Test if solve_to raises error if method is not recognised
 
 # Class for testing supporting functions to continuation, solve_to and diffusion_solver
-
 class TestComplementaryFunctions(unittest.TestCase): 
         
     def test_gen_diag_mat(self):
