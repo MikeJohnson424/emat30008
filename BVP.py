@@ -9,9 +9,10 @@ from functions import PPM, hopf_normal_form
 from PDEs import construct_A_and_b, Grid, BoundaryCondition
 import scipy
 import types
+from typing import Callable, List, Tuple, Union
 
 
-def lim_cycle_conditions(func,init,parameters):
+def lim_cycle_conditions(func: Callable,init:np.ndarray,parameters:np.ndarray) -> np.ndarray:
 
     x0 = init[:-1]
     T = init[-1]
@@ -21,7 +22,7 @@ def lim_cycle_conditions(func,init,parameters):
     
     return np.hstack((x0 - x_T, dxdt_0))
 
-def shooting(func,init,parameters,solver=root):
+def shooting(func: Callable,init:np.ndarray,parameters:np.ndarray,solver:Callable=root) -> object:
       
     """
     A function to solve for the required initial conditions and period of a limit cycle for a given ODE.
@@ -55,7 +56,7 @@ def shooting(func,init,parameters,solver=root):
 
     return result(x0,T)
 
-def BVP_solver(grid,bc_left,bc_right,q,D,u_guess = None):
+def BVP_solver(grid:object,bc_left:object,bc_right:object,q:Callable,D:Union[float,int],u_guess:Union[np.ndarray,None] = None) -> object:
 
     """
     A function to solve boundary value problems for the time-invariant diffusion equation.

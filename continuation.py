@@ -5,9 +5,10 @@ from BVP import lim_cycle_conditions, shooting
 from scipy.optimize import root
 from functions import PPM, h
 from scipy.integrate import solve_ivp
+from typing import Callable, List, Tuple, Union
 
 
-def gen_sol_mat(x_dim,max_steps):
+def gen_sol_mat(x_dim: int,max_steps: int) -> np.ndarray:
 
     """
     A function for generating solution storage array as part of continuation.
@@ -24,7 +25,7 @@ def gen_sol_mat(x_dim,max_steps):
     """
     return np.zeros((x_dim+1,max_steps+1))
 
-def find_initial_solutions(solver,myode,x0,par0,vary_par,step_size,solve_for):
+def find_initial_solutions(solver:Callable,myode:Callable,x0:np.ndarray,par0:np.ndarray,vary_par:int,step_size:float,solve_for:str) -> Tuple[np.ndarray,np.ndarray]:
 
     """
     A function for generating two initial solutions to be used in pseudo-arclength continuation.
@@ -93,7 +94,7 @@ def find_initial_solutions(solver,myode,x0,par0,vary_par,step_size,solve_for):
     
     return [u_old,u_current]
 
-def predictor(u_current,u_old,method,step_size):
+def predictor(u_current:np.ndarray,u_old:np.ndarray,method:str,step_size:float) -> Tuple[np.ndarray,np.ndarray]:
 
     """
     A function for performing the predictor step of pseudo-arclength continuation.
@@ -127,7 +128,7 @@ def predictor(u_current,u_old,method,step_size):
 
     return [u_pred,delta_u]
 
-def corrector(myode,u,vary_par,par0,solve_for,u_pred,delta_u):
+def corrector(myode:Callable,u:np.ndarray,vary_par:int,par0:np.ndarray,solve_for:str,u_pred:np.ndarray,delta_u:np.ndarray) -> np.ndarray:
 
     """
     A function to solve as part of the corrector stage of pseudo-arclength continuation.
@@ -164,7 +165,14 @@ def corrector(myode,u,vary_par,par0,solve_for,u_pred,delta_u):
 
     return np.hstack((R1,R2))
 
-def continuation(myode,x0,par0,vary_par=0,step_size=0.1,max_steps=50,solve_for = 'equilibria', method='pArclength',solver=root):
+class result():
+
+        def __init__(self,u,alpha):
+            
+                self.u = u
+                self.alpha = alpha
+
+def continuation(myode:Callable,x0:np.ndarray,par0:np.ndarray,vary_par:int=0,step_size:float=0.1,max_steps:int=50,solve_for:str = 'equilibria', method:str='pArclength',solver:Callable=root) -> object:
     
     """
     A function for performing continuation.
@@ -226,11 +234,5 @@ def continuation(myode,x0,par0,vary_par=0,step_size=0.1,max_steps=50,solve_for =
         u_old = u_current
         u_current = u_true
 
-    class result():
-
-        def __init__(self,u,alpha):
-            
-                self.u = u
-                self.alpha = alpha
 
     return result(u[:-1,:],u[-1,:])

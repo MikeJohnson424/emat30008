@@ -83,7 +83,7 @@ plt.show()
 
 ### Numerical shooting
 
-This code is found in `BVP.py` and provides functions to solve for the conditions for a limit cycle of an ODE using the shooting method. It includes functions `lim_cycle_conditions` and `shooting`. The code can be used as follows:
+This code is found in `BVP.py` and provides functions to solve for the conditions of a limit cycle of an ODE using the shooting method. It includes functions `lim_cycle_conditions` and `shooting`. The code can be used as follows:
 
 1) Import libraries for defining root solving functions/plotting results:
 
@@ -91,6 +91,7 @@ This code is found in `BVP.py` and provides functions to solve for the condition
 from scipy.integrate import solve_ivp
 from scipy.optimize import root
 import matplotlib.pyplot as plt
+```
 
 2) Define your ODE function, initial guess for the limit cycle conditions, and other parameters if required. For example:
 
@@ -135,6 +136,7 @@ Found in `continuation.py` this code provides functions for performing numerical
 1) Import necessary libraries and functions for plotting and solving: 
 
 ```python
+from scipy.optimize import root
 from scipy.optimize import solve_ivp
 import matplotlib.pyplot as plt
 ```
@@ -181,9 +183,9 @@ plt.plot(parameter_values, solution_values[0])
 
 ### Finite difference solvers
 
-The finite difference solvers developed here are `diffusion_solver` and `BVP_solver` which can be found in `PDE.py` and `BVP.py` respectively. Both functions use finite difference and can be used by following these steps: 
+The finite difference solvers developed here are `diffusion_solver` and `BVP_solver` which can be found in `PDE.py` and `BVP.py` respectively. Both functions call from `PDEs.py` and use finite difference. Please refer to the following steps on usage: 
 
-1) Import necessary libraries:
+1) Import necessary libraries and functions:
 
 ```python
 from PDEs import Grid, BoundaryCondition
@@ -296,6 +298,4 @@ The jupyter notebook `report.ipynb` contains a report on the project, consisting
 
 ## Contributions
 
-## License
-
-Include licensing information for the project.
+Contributions to this project are welcome from all.

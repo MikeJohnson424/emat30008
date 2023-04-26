@@ -11,7 +11,7 @@ from matplotlib.animation import FuncAnimation
 from typing import Callable, List,Union
 
 
-def gen_diag_mat(N,entries):
+def gen_diag_mat(N:int,entries:np.ndarray):
 
     """
     A function that uses scipy.sparse.diags to generate a diagonal matrix
@@ -40,7 +40,7 @@ def gen_diag_mat(N,entries):
 
     return mat
 
-def Grid(N=10,a=0,b=1):
+def Grid(N:int=10,a:Union[float,int]=0,b:Union[float,int]=1) -> object:
 
     """
     A function that generates various attributes used in diffusion_solver
@@ -77,7 +77,7 @@ def Grid(N=10,a=0,b=1):
 
     return grid(x,dx,a,b)
 
-def BoundaryCondition(bcon_type, value,grid):
+def BoundaryCondition(bcon_type:str, value:np.ndarray,grid:object) -> object:
     
     """
     A function that defines various features of the A matrix in the finite difference matrix equation
@@ -134,7 +134,7 @@ def BoundaryCondition(bcon_type, value,grid):
 
     return BC(bcon_type, value, A_entry)
 
-def construct_A_and_b(grid,bc_left,bc_right,storage_type = 'dense'):
+def construct_A_and_b(grid:object,bc_left:object,bc_right:object,storage_type:str = 'dense') -> List[np.ndarray,np.ndarray]:
 
     """
     A function that builds the A and b matrix depending on set boundary conditions
@@ -209,7 +209,7 @@ def construct_A_and_b(grid,bc_left,bc_right,storage_type = 'dense'):
 
     return [A, b_func]
 
-def du_dt(u, t, parameters):  # Define explicit temporal derivative of u
+def du_dt(u:np.ndarray, t:float, parameters:np.ndarray) -> np.ndarray:  # Define explicit temporal derivative of u
 
     A, b, q, D, dx, x = parameters
 
@@ -220,16 +220,16 @@ def du_dt(u, t, parameters):  # Define explicit temporal derivative of u
     else:
         raise ValueError('Matrix A must be either dense (numpy.ndarray) or sparse (scipy.sparse)')
 
-def diffusion_solver(grid, 
-                    bc_left, 
-                    bc_right,
-                    initial_condition,
-                    D,
-                    q,
-                    dt=10,
-                    t_steps=20,
-                    method='implicit-euler',
-                    storage_type = 'dense'):
+def diffusion_solver(grid: object, 
+                    bc_left: object, 
+                    bc_right: object,
+                    initial_condition: Union[float, int, Callable],
+                    D = Union[float,int],
+                    q = Union[float,int,Callable],
+                    dt: float=10,
+                    t_steps:int=20,
+                    method:str='implicit-euler',
+                    storage_type:str = 'dense') -> object:
     
     """
     A function that iterates over a time-range using a chosen finite difference method

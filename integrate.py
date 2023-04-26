@@ -2,9 +2,10 @@
 import numpy as np
 from functions import PPM
 import matplotlib.pyplot as plt
+from typing import Callable,Union
 
 
-def euler_step(deltat_max,x, func,parameters,t=None): # define function to compute a single euler step
+def euler_step(deltat_max:float,x:np.ndarray, func:Callable,parameters:np.ndarray,t:Union[float,None]=None) -> np.ndarray: # define function to compute a single euler step
 
     """
     A function that uses the forward euler method to integrate over a single time-step
@@ -28,7 +29,7 @@ def euler_step(deltat_max,x, func,parameters,t=None): # define function to compu
     x_n1 = x + deltat_max*func(x,t)
     return x_n1
 
-def RK4_step(deltat_max,x,func,parameters,t=None):
+def RK4_step(deltat_max:float,x:np.ndarray,func:Callable,parameters:np.ndarray,t:Union[float,None]=None) -> np.ndarray:
 
     """
     A function that uses the runge-kutta 4 integration method over a single time-step.
@@ -62,7 +63,7 @@ def RK4_step(deltat_max,x,func,parameters,t=None):
 
     return x_n1
 
-def solve_to(func, x0, t, parameters=[], deltat_max=0.01, method = 'RK4'):
+def solve_to(func:Callable, x0:np.ndarray, t:Union[float,int], parameters:np.ndarray=[], deltat_max:float=0.01, method:str = 'RK4') -> object:
 
     """
     A function that iterates over a time-range using a chosen integration method to solve for the solution of a 
