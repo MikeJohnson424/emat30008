@@ -1,5 +1,3 @@
-
-
 from scipy.optimize import fsolve, root
 from scipy.integrate import solve_ivp
 from integrate import solve_to
@@ -9,7 +7,7 @@ from functions import PPM, hopf_normal_form
 from PDEs import construct_A_and_b, Grid, BoundaryCondition
 import scipy
 import types
-from typing import Callable, List, Tuple, Union
+from typing import Callable, List, Tuple, Union,Optional
 
 
 def lim_cycle_conditions(func: Callable,init:np.ndarray,parameters:np.ndarray) -> np.ndarray:
@@ -22,7 +20,13 @@ def lim_cycle_conditions(func: Callable,init:np.ndarray,parameters:np.ndarray) -
     
     return np.hstack((x0 - x_T, dxdt_0))
 
-def shooting(func: Callable,init:np.ndarray,parameters:np.ndarray,solver:Callable=root) -> object:
+class shooting_result():
+         
+        def __init__(self,x0,T):
+            self.x0 = x0
+            self.T = T
+
+def shooting(func: Callable,init:np.ndarray,parameters:np.ndarray,solver:Callable=root) -> shooting_result:
       
     """
     A function to solve for the required initial conditions and period of a limit cycle for a given ODE.
@@ -48,15 +52,18 @@ def shooting(func: Callable,init:np.ndarray,parameters:np.ndarray,solver:Callabl
     sol = solver(lambda x: lim_cycle_conditions(func,x,parameters),init).x
     x0 = sol[:-1]
     T = sol[-1]
-    class result():
-         
-        def __init__(self,x0,T):
-            self.x0 = x0
-            self.T = T
+    
 
-    return result(x0,T)
+    return shooting_result(x0,T)
 
-def BVP_solver(grid:object,bc_left:object,bc_right:object,q:Callable,D:Union[float,int],u_guess:Union[np.ndarray,None] = None) -> object:
+class BVP_solver_result():
+
+    def __init__(self,u,x):
+            
+            self.u = u
+            self.x = x
+
+def BVP_solver(grid:object,bc_left:object,bc_right:object,q:Callable,D:Union[float,int],u_guess:Optional[np.ndarray] = None) -> BVP_solver_result:
 
     """
     A function to solve boundary value problems for the time-invariant diffusion equation.
@@ -97,12 +104,13 @@ def BVP_solver(grid:object,bc_left:object,bc_right:object,q:Callable,D:Union[flo
 
     if isinstance(u_guess,types.NoneType):
         u_guess = np.zeros(len(x))
-    elif type(u_guess) in (int,float):
+    elif isinstance(u_guess,(int,float)):
         u_guess = u_guess*np.ones(len(x))
     elif isinstance(u_guess,types.FunctionType):
         u_guess = u_guess(x)
     else:
-        raise TypeError('u_guess must be a float, int or function')
+        raise TypeError(f'u_guess must be a float, int, or function, not {type(u_guess)}')
+
 
     # If q entered as float or int, convert to function
         
@@ -127,12 +135,5 @@ def BVP_solver(grid:object,bc_left:object,bc_right:object,q:Callable,D:Union[flo
     else:
         u = np.linalg.solve(A,-b(None)-dx**2/D*q(x,None))
 
-    class result():
-
-        def __init__(self,u,x):
-                
-                self.u = u
-                self.x = x
-
-    return result(u,x)
+    return BVP_solver_result(u,x)
 

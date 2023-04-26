@@ -3,12 +3,9 @@
 import numpy as  np
 from math import floor
 import types
-from integrate import solve_to
 import scipy.sparse as sp
 from scipy.integrate import solve_ivp
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
-from typing import Callable, List,Union
+from typing import Callable, List,Union,Tuple
 
 
 def gen_diag_mat(N:int,entries:np.ndarray):
@@ -134,7 +131,7 @@ def BoundaryCondition(bcon_type:str, value:np.ndarray,grid:object) -> object:
 
     return BC(bcon_type, value, A_entry)
 
-def construct_A_and_b(grid:object,bc_left:object,bc_right:object,storage_type:str = 'dense') -> List[np.ndarray,np.ndarray]:
+def construct_A_and_b(grid:object,bc_left:object,bc_right:object,storage_type:str = 'dense') -> Tuple[np.ndarray,np.ndarray]:
 
     """
     A function that builds the A and b matrix depending on set boundary conditions

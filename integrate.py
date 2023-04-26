@@ -2,53 +2,61 @@
 import numpy as np
 from functions import PPM
 import matplotlib.pyplot as plt
-from typing import Callable,Union
+from typing import Callable,Union,Optional
 
 
-def euler_step(deltat_max:float,x:np.ndarray, func:Callable,parameters:np.ndarray,t:Union[float,None]=None) -> np.ndarray: # define function to compute a single euler step
+def euler_step(deltat_max:float,x:np.ndarray, func:Callable,parameters:Optional[np.ndarray]=None,t:Union[float,None]=None) -> np.ndarray: # define function to compute a single euler step
 
     """
-    A function that uses the forward euler method to integrate over a single time-step
+    A function that uses the forward Euler method to integrate over a single time-step.
 
     Parameters
     ----------
-    deltat_max : Float
-        The time-step being iterated over
-    x_n : Python list
-        Conditions of ODE system at current time level.
-    f : function
+    deltat_max : float
+        The time-step being iterated over.
+    x : np.ndarray
+        Conditions of ODE system at the current time level.
+    func : Callable
         ODE system being integrated.
+    parameters : np.ndarray
+        Array containing the parameters of the ODE.
+    t : Union[float, None], optional
+        Current time level.
 
     Returns
     -------
-    Returns a python list defining the solution at the next time-level.
+    np.ndarray
+        A NumPy array defining the solution at the next time-level.
     """
 
     # Solve for x at t+deltat_max:
 
-    x_n1 = x + deltat_max*func(x,t)
+    x_n1 = x + deltat_max*func(x,t,parameters)
     return x_n1
 
 def RK4_step(deltat_max:float,x:np.ndarray,func:Callable,parameters:np.ndarray,t:Union[float,None]=None) -> np.ndarray:
 
     """
-    A function that uses the runge-kutta 4 integration method over a single time-step.
+    A function that uses the Runge-Kutta 4 integration method over a single time-step.
 
     Parameters
     ----------
     deltat_max : float
-        Size of time-step
-    x : Python list
-        Current conditions of system.
-    t : Float
-        Current time level.
-    func : function
+        Size of time-step.
+    x : np.ndarray
+        Current conditions of the system.
+    func : Callable
         ODE system to integrate.
+    parameters : np.ndarray
+        Array containing the parameters of the ODE.
+    t : Union[float, None], optional
+        Current time level.
 
     Returns
     -------
-    Returns a numpy array that defines the solution at the next time-step.
-    """ 
+    np.ndarray
+        A NumPy array that defines the solution at the next time-step.
+    """
 
     # Define incremental function values:
 
@@ -63,7 +71,12 @@ def RK4_step(deltat_max:float,x:np.ndarray,func:Callable,parameters:np.ndarray,t
 
     return x_n1
 
-def solve_to(func:Callable, x0:np.ndarray, t:Union[float,int], parameters:np.ndarray=[], deltat_max:float=0.01, method:str = 'RK4') -> object:
+class solve_to_result:
+        def __init__(self,x,t_space):
+            self.x = x
+            self.t_space = t_space
+
+def solve_to(func:Callable, x0:np.ndarray, t:Union[float,int], parameters:np.ndarray=[], deltat_max:float=0.01, method:str = 'RK4') -> solve_to_result:
 
     """
     A function that iterates over a time-range using a chosen integration method to solve for the solution of a 
@@ -71,21 +84,25 @@ def solve_to(func:Callable, x0:np.ndarray, t:Union[float,int], parameters:np.nda
 
     Parameters
     ----------
-    func : function
-        The ODE to solve to time t from time = 0. Must be of the form func(x,t,parameters) where x,parameters are python lists.
-    x0 : Python List
-        Initial conditions for ODE system
-    t : Python list
-        List containing two values, t0 and t1, defining the time range to solve over.
-    deltat_max : Float
-        Defines the maximum time step to be used in the integration
-    method : String
-        Choose from 'forward_euler' or 'RK4' to define which solver is used
+    func : Callable
+        The ODE to solve to time t from time = 0. Must be of the form func(x, t, parameters) where x, parameters are NumPy arrays.
+    x0 : np.ndarray
+        Initial conditions for ODE system.
+    t : Tuple[float, float]
+        A tuple containing two values, t0 and t1, defining the time range to solve over.
+    parameters : np.ndarray, optional
+        Array containing the parameters of the ODE.
+    deltat_max : float, optional
+        Defines the maximum time step to be used in the integration.
+    method : str, optional
+        Choose from 'euler' or 'RK4' to define which solver is used
 
     Returns
     -------
-    Returns a python class with attributes t_space : a list of intermediate time steps for which ODE is solved at, and x : 
-    a numpy array containing solution across time to ODE system given x0.
+    solve_to_result.t_space : np.ndarray
+        A list of intermediate time steps for which ODE is solved at
+    solve_to_result.x np.ndarray
+        A numpy array containing solution across time to ODE system given x0.
     """
 
     t0,t1 = t # Unpack t
@@ -135,11 +152,5 @@ def solve_to(func:Callable, x0:np.ndarray, t:Union[float,int], parameters:np.nda
     delta_t = t1 - t_space[-2]
     x[:,counter] = stepper(delta_t, x[:,-2],func,parameters,t1)
 
-    # Define class to return result as object with attributes x and t_space:
 
-    class result:
-        def __init__(self,x,t_space):
-            self.x = x
-            self.t_space = t_space
-
-    return result(x, t_space)
+    return solve_to_result(x, t_space)
