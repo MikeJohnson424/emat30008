@@ -21,7 +21,7 @@ def lim_cycle_conditions(func,init,parameters):
     
     return np.hstack((x0 - x_T, dxdt_0))
 
-def shooting(func,init,parameters,solver):
+def shooting(func,init,parameters,solver=root):
       
     """
     A function to solve for the required initial conditions and period of a limit cycle for a given ODE.
@@ -44,16 +44,16 @@ def shooting(func,init,parameters,solver):
         Period of limit cycle
     """
 
-    sol = solver(lambda x: lim_cycle_conditions(func,x,parameters),init)
-    x = sol.x[:-1]
-    T = x[-1]
+    sol = solver(lambda x: lim_cycle_conditions(func,x,parameters),init).x
+    x0 = sol[:-1]
+    T = sol[-1]
     class result():
          
-        def __init__(self,x,T):
-            self.x = x
+        def __init__(self,x0,T):
+            self.x0 = x0
             self.T = T
 
-    return result(x,T)
+    return result(x0,T)
 
 def BVP_solver(grid,bc_left,bc_right,q,D,u_guess = None):
 

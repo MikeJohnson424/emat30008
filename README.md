@@ -6,9 +6,6 @@ fr19042@bristol.ac.uk
 
 This repository contains a collection of functions to solve ordinary differential equations (ODEs) and find limit cycles for given systems. The code provides various numerical integration methods, including the forward Euler method and the Runge-Kutta 4 method. Additionally, it includes functionality for finding the initial conditions and period of limit cycles using the shooting method.
 
-
-# ODE Solver and Limit Cycle Finder
-
 This repository contains code for solving ordinary differential equations (ODEs) using various numerical integration methods, as well as finding limit cycles for given ODE systems.
 
 ## Table of Contents
@@ -48,7 +45,7 @@ Explain how to profile the code, including information on performance analysis a
 
 Users can profile the major functions associated with this package by running 'profile_"function_name".py' files in the terminal. For example, to profile diffusion_solver a user can type:
 
-"python profile_diffusion_solver.py".
+`python profile_diffusion_solver.py`.
 
 
 ## Report

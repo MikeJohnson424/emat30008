@@ -1,4 +1,6 @@
 
+#%%
+
 import numpy as np
 import matplotlib.pyplot as plt
 from BVP import lim_cycle_conditions, shooting
@@ -53,22 +55,27 @@ def find_initial_solutions(solver,myode,x0,par0,vary_par,step_size,solve_for):
         Second solution.
     """
 
-    # Solve for chosen solution and concatenate with parameter value being varied
+    # Checks for invalid inputs 
 
+    if type(vary_par) != int:
+        raise TypeError('par0 must be an int')  
+
+    # Solve for chosen solution and concatenate with parameter value being varied
+ 
     if solve_for == 'limit_cycle': # Solve for limit cycle conditions using shooting method
-        #solution1 = shooting(myode,x0,par0,solver)
+        solution1 = shooting(myode,x0,par0,solver)
         u_old = np.hstack((
-            solver(lambda x: lim_cycle_conditions(myode,x,par0),x0).x,
-            #solution1.x,
-            #solution1.T,
+            #solver(lambda x: lim_cycle_conditions(myode,x,par0),x0).x,
+            solution1.x0,
+            solution1.T,
             par0[vary_par]
         ))   
         par0[vary_par] += step_size 
-        #solution2 = shooting(myode,u_old[:-1],par0,solver)
+        solution2 = shooting(myode,u_old[:-1],par0,solver)
         u_current = np.hstack((
-            solver(lambda x: lim_cycle_conditions(myode,x,par0),u_old[:-1]).x,
-            #solution2.x,
-            #solution2.T,
+            #solver(lambda x: lim_cycle_conditions(myode,x,par0),u_old[:-1]).x,
+            solution2.x0,
+            solution2.T,
             par0[vary_par]
             )) 
         
@@ -230,3 +237,32 @@ def continuation(myode,x0,par0,vary_par=0,step_size=0.1,max_steps=50,solve_for =
 
     return result(u[:-1,:],u[-1,:])
 
+
+#%%
+
+# func = PPM
+# myode = PPM
+# x0 = [0.5,0.5,20]
+# par0 = [1,0.1,0.1]
+# solver = root
+# step_size = 0.1
+# solve_for = 'limit_cycle'
+# vary_par = 0
+
+# u_old, u_current = find_initial_solutions(root, PPM, [0.5,0.5,20],[1,0.1,0.1],0,0.1,'limit_cycle')
+# solution_FIS = solve_ivp(lambda t,x: PPM(x,t,[1,0.1,0.1]),[0,u_current[-2]], u_current[:-2])
+# plt.plot(solution_FIS.y[0],solution_FIS.y[1])
+
+# u_direct = root(lambda x: lim_cycle_conditions(PPM,x,[1,0.1,0.1]),[0.5,0.5,20]).x
+# solution_direct = solve_ivp(lambda t,x: PPM(x,t,[1,0.1,0.1]),[0,u_direct[-1]],u_direct[:-1])
+# plt.plot(solution_direct.y[0],solution_direct.y[1])
+
+# %%
+
+# result = shooting(PPM,[0.5,0.5,20],[1,0.1,0.1],root)
+# solution = solve_ivp(lambda t,x: PPM(x,t,[1,0.1,0.1]),[0,result.T], result.x0)
+
+# plt.plot(solution.y[0],solution.y[1])
+
+
+# %%
