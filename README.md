@@ -112,8 +112,8 @@ result = shooting(my_function, init_guess, parameters, solver=root)
 4) Access the limit cycle initial conditions and period:
 
 ```python
-initial_condition = result.x[0]
-period = result.x[2]
+initial_condition = result.x0
+period = result.T
 ```
 
 5) Solve for the limit cycle using a numerical integrator:
@@ -181,17 +181,114 @@ plt.plot(parameter_values, solution_values[0])
 
 ### Finite difference solvers
 
+The finite difference solvers developed here are `diffusion_solver` and `BVP_solver` which can be found in `PDE.py` and `BVP.py` respectively. Both functions use finite difference and can be used by following these steps: 
 
+1) Import necessary libraries:
+
+```python
+from PDEs import Grid, BoundaryCondition
+import matplotlib.pyplot as plt
+import numpy as np
+```
+
+2) Define the grid, boundary conditions, initial conditions, diffusion coefficient, and source term for your problem:
+
+```python
+# Grid parameters
+N = 100
+a = 0
+b = 1
+
+# Boundary conditions
+bc_left = BoundaryCondition("dirichlet", [0], Grid(N, a, b))
+bc_right = BoundaryCondition("neumann", [1], Grid(N, a, b))
+
+# Initial condition
+initial_condition = lambda x: np.sin(np.pi * x)
+
+# Diffusion coefficient
+D = 0.1
+
+# Source term (function q(x, t, u))
+q = lambda x, t, u: 0
+```
+
+3) Choose the solver parameters:
+
+```python
+# Time step size and number of time steps
+dt = 0.01
+t_steps = 500
+
+# Solver method
+method = "implicit-euler"
+
+# Matrix storage type
+storage_type = "dense"
+
+# If using BVP_solver to solve for non-linear source term:
+u_guess = 5
+```
+
+4) Call either `diffusion_solver` or `BVP_solver` depending on whether attemptng for solve the PDE or ODE form of the reaction-diffusion equation. Below is example code for using both functions: 
+
+```python
+results_PDE = diffusion_solver(
+    grid=Grid(N, a, b),
+    bc_left=bc_left,
+    bc_right=bc_right,
+    initial_condition=initial_condition,
+    D=D,
+    q=q,
+    dt=dt,
+    t_steps=t_steps,
+    method=method,
+    storage_type=storage_type,
+)
+
+results_ODE = BVP_solver(
+    grid=Grid(N, a, b),
+    bc_left=bc_left,
+    bc_right=bc_right,
+    q=q,
+    D=D
+    u_guess = None
+)
+```
+
+5) Access the solution, time steps and grid points from the `results_PDE` object:
+
+```python
+u = results_PDE.u  # solution array
+t = results_PDE.t  # time steps array
+x = results_PDE.x  # grid points array
+```
+
+6) Optionally, plot results using `matplotlib`:
+
+```python
+# Show solution at final time:
+plt.plot(x,u[:,-1])
+plt.title('Diffusion Equation Solution')
+plt.xlabel('x')
+plt.ylabel('u')
+```
 
 ## Testing
 
-This project uses pytest to test the code. To run the tests, type python runtests.py in the terminal.
+This project uses pytest to test the code. To run tests, type the following into the console:
+
+```python
+python runtests.py
+```
 
 ## Profiling
 
 Users can profile the major functions associated with this package by running 'profile_"function_name".py' files in the terminal. For example, to profile diffusion_solver a user can type:
 
-`python profile_diffusion_solver.py`.
+```python
+python profile_diffusion_solver.py
+```
 
 ## Report
 
