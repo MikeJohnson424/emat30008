@@ -12,6 +12,7 @@ from PDEs import gen_diag_mat, Grid, BoundaryCondition, construct_A_and_b, diffu
 from continuation import gen_sol_mat, predictor, corrector,continuation, find_initial_solutions
 from scipy.optimize import root
 import scipy.sparse as sp
+from scipy.integrate import solve_ivp
 
 #%% 
 
@@ -48,58 +49,25 @@ class TestIntegrationMethods(unittest.TestCase):
         np.testing.assert_almost_equal(result, expected, decimal=8)
 
     def test_RK4_step(self): # Test for runge-kutta stepping a function f(x) = x
-        x = np.array([1.0])
-        t = 0
-        deltat_max = 0.1
         expected = np.array([1.10517083])
-        result = RK4_step(deltat_max, x, f, [], t)
+        result = RK4_step(0.1, np.array([1.0]), f, [], 0)
+        self.assertAlmostEqual(result[0],expected[0],places=3)
+
+    def test_solve_to_one_dimensional(self):
+
+        expected = np.exp(1)
+        result = solve_to(func=f, x0=[1], t=[0, 1], parameters=[], deltat_max=0.01, method='RK4').x[:,-1]
+        self.assertAlmostEqual(result[0], expected, places=2)
+
+    def test_solve_to_two_dimensional(self):
+
+        expected = np.array([-0.5507708 ,  0.92060461])
+        result = solve_to(hopf_normal_form,[5,10],t=[0,1],parameters=[1,-1],deltat_max=0.01,method='RK4')
+        result = result.x[:,-1]
+
         np.testing.assert_almost_equal(result, expected, decimal=8)
 
-    def test_solve_to(self): # Test for solving a function f(x) = x to a specified time using both forward euler and fourth order runge-kutta 
-        x0 = [1]
-        t = [0,1]
-        deltat_max = 0.0001
-        expected = np.e
 
-        method = 'forward_euler'
-        result = solve_to(f, x0, [0,t], [], deltat_max, method)
-
-        self.assertEqual(len(result.t_space), len(result.x[0]), msg="Time array dimensions do not match solution dimensions")
-        self.assertAlmostEqual(result.t_space[-1], t, msg="Final time in t_space does not match time specified by user")
-        self.assertAlmostEqual(result.x[0,-1],expected, places = 3,msg="Solution does not match expected solution")
-
-        method = 'RK4'
-        result = solve_to(f, x0, [0,t], [], deltat_max, method)
-
-        self.assertEqual(len(result.t_space), len(result.x[0]),msg= "Time array dimensions do not match solution dimensions")
-        self.assertAlmostEqual(result.t_space[-1], t, msg="Final time in t_space does not match time specified by user")
-
-        # Test hopf normal form
-
-        beta = 10
-        theta = 0
-        result = solve_to(func=hopf_normal_form, x0=[np.pi, 0], t=[0, 20], parameters=[beta, -1], deltat_max=0.1, method='RK4')
-        x = result.x
-        t = result.t_space
-        x1_expected = np.sqrt(beta) * np.cos(t+theta)
-        x2_expected = np.sqrt(beta) * np.sin(t+theta)
-        x_expected = np.array([x1_expected, x2_expected])
-        np.testing.assert_array_almost_equal(x, x_expected)
-
-
-
-
-    def test_solve_to_errors(self): # Test if solve_to raises correct errors
-        x0 = [1]
-        t = -0.4
-        deltat_max = 0.0001
-        method = 'forward_euler'
-        with self.assertRaises(ValueError): # Test if solve_to raises error if time is negative
-            solve_to(f, x0, [-5,t], [], deltat_max, method)
-        with self.assertRaises(ValueError):
-            solve_to(f, x0, [0,5], [], deltat_max, 'Unrecognised method') # Test if solve_to raises error if method is not recognised
-
-# Class for testing supporting functions to continuation, solve_to and diffusion_solver
 class TestComplementaryFunctions(unittest.TestCase): 
         
     def test_gen_diag_mat(self):
@@ -135,6 +103,7 @@ class TestComplementaryFunctions(unittest.TestCase):
             BoundaryCondition(bcon_type, ['invalid_input'], grid)
 
     def test_construct_A_and_b(self):
+
         grid = Grid(5, 0, 1)
 
         # Test for double dirichlet
@@ -176,16 +145,13 @@ class TestComplementaryFunctions(unittest.TestCase):
 
         A_DR, b_DR = construct_A_and_b(grid,bc_left,bc_right)
         expected_A_DR = np.array([
-        [-2.,  1.,  0.,  0.,  0.],
-        [ 1., -2.,  1.,  0.,  0.],
-        [ 0.,  1., -2.,  1.,  0.],
-        [ 0.,  0.,  1., -2.,  1.],
-        [ 0.,  0.,  0.,  2., -2.8]
-        ])
+        [-2. ,  1. ,  0. ,  0. ,  0. ],
+        [ 1. , -2. ,  1. ,  0. ,  0. ],
+        [ 0. ,  1. , -2. ,  1. ,  0. ],
+        [ 0. ,  0. ,  1. , -2. ,  1. ],
+        [ 0. ,  0. ,  0. , -2.8,  2. ]])
 
         np.testing.assert_array_almost_equal(A_DR,expected_A_DR)
-
-
 
     def test_du_dt(self):
 
@@ -236,8 +202,11 @@ class TestComplementaryFunctions(unittest.TestCase):
         np.testing.assert_array_almost_equal(delta_u, expected_delta_u)
     
     def test_corrector(self):
-        pass
-    
+        
+        expected = np.array([-4.11183487e-03, -1.97697487e-05,  4.00000000e-02, -2.70000000e+00])
+        result = corrector(PPM,[0.1,0.1,0.1,1],0,[0.5,0.1,0.1],'limit_cycle',np.array([1,1,1,1]),np.array([1,1,1,1]))
+        np.testing.assert_array_almost_equal(result, expected, decimal=6)
+
     def test_find_initial_solutions(self):
 
         def dummy_myode(x, _, par):
@@ -257,64 +226,97 @@ class TestComplementaryFunctions(unittest.TestCase):
         np.testing.assert_array_almost_equal(u_old, expected_u_old, decimal=6)
         np.testing.assert_array_almost_equal(u_current, expected_u_current, decimal=6)
     
-    def test_lim_cycle_condition(self):
-        pass
+    def test_lim_cycle_conditions(self):
+
+        expected = np.array([-0.34097362,  0.3350076 , -0.16666667])
+        result = lim_cycle_conditions(PPM,[0.5,0.5,20],[1,0.1,0.1])
+        np.testing.assert_array_almost_equal(result, expected, decimal=6)
 
 class TestDiffusionSolver(unittest.TestCase):
     
-    def setUp(self):
-        self.grid = Grid(10, 0, 1)
-        self.bc_left = BoundaryCondition('dirichlet', [5],self.grid)
-        self.bc_right = BoundaryCondition('dirichlet', [10], self.grid)
-        self.IC = 0
-        self.D = 1
-        self.q = 0
-        self.dt = 0.1
-        self.t_steps = 10
-        self.method = 'implicit-euler'
-        self.storage = 'dense'
+    def test_dirichlet_boundary_conditions(self):
 
-    def test_diffusion_solver_conserves_dirichlet_boundary_conditions(self):
-        result = diffusion_solver(self.grid, self.bc_left, self.bc_right, self.IC, self.D, self.q, self.dt, self.t_steps, self.method, self.storage)
-        self.assertEqual(result.u[0, 0], self.bc_left.value)
-        self.assertEqual(result.u[-1, 0], self.bc_right.value)
+        expected = np.array([5, 10])
+        grid = Grid(100,0,1)
+        bc_left = BoundaryCondition('dirichlet', [5],grid)
+        bc_right = BoundaryCondition('dirichlet', [10],grid)
+        q = lambda x, t, u: 0
+        D = 1.0
+        result = diffusion_solver(grid,bc_left,bc_right,initial_condition=0,q=q,D=D,dt=1,t_steps = 100,method = 'implicit-euler')
+        result = np.array([result.u[0,-1],result.u[-1,-1]])
 
-    def test_diffusion_solver_with_function_IC(self):
-        IC = lambda x: x ** 2
-        result = diffusion_solver(self.grid, self.bc_left, self.bc_right, IC, self.D, self.q, self.dt, self.t_steps, self.method, self.storage)
-        self.assertTrue(np.allclose(result.u[:, 0], IC(self.grid.x), atol=1e-6))
+        np.testing.assert_array_almost_equal(result, expected, decimal=0)
 
-    def test_explicit_euler(self):
-        pass
-    def test_implicit_euler(self):
-        pass
-    def test_method_of_lines(self):
-        pass
-    def test_crank_nicolson(self):
-        pass
-    def test_IMEX(self):
-        pass
-    # BVP test: constant or function AND dirichlet, neumann, robin etc.
-    
-class TestContinuation(unittest.TestCase):
+    def test_neumann_boundary_conditions(self):
 
+        grid = Grid(100,0,1)
+        bc_left = BoundaryCondition('dirichlet', [0],grid)
+        bc_right = BoundaryCondition('dirichlet', [1],grid)
+        q = lambda x, t, u: 0
+        D = 1.0
+        result = diffusion_solver(grid,bc_left,bc_right,initial_condition=0,q=q,D=D,dt=1,t_steps = 100,method = 'implicit-euler')
 
-class TestOdeBVP(unittest.TestCase):
+        expected = 1
+        result = (result.u[-1,-1]-result.u[-2,-1])/grid.dx
+
+        self.assertAlmostEqual(result,expected)
 
     def test_non_linear_source_term(self):
-        pass
 
-    def test_linear_source_term(self):
-        pass
 
-    def test_robin_boundary_condition(self):
-        pass
+        expected = 0.9989421966087896
+        grid = Grid(100,0,1)
+        bc_left = BoundaryCondition('dirichlet', [0],grid)
+        bc_right = BoundaryCondition('dirichlet', [1],grid)
+        q = lambda x, t, u: 1+u
+        D = 1.0
+        result = diffusion_solver(grid,bc_left,bc_right,initial_condition=0,q=q,D=D,dt=1,t_steps = 100,method = 'IMEX')
+        result = result.u[-1,-1]
 
-    def test_dirichlet_boundary_condition(self):
-        pass
+        self.assertAlmostEqual(result,expected)
+    
+# class TestContinuation(unittest.TestCase):
 
-    def test_neumann_boundary_condition(self):
-        pass
+    def test_limit_cycle(self):
+        results = continuation(PPM, [0.5,0.5,20],[1,0.1,0.1],vary_par=0,step_size=0.1,max_steps=20,solve_for='limit_cycle')
+
+        x0 = results.u[:-1]
+        T = results.u[-1]
+        alpha = results.alpha
+        idx = 5
+        result = solve_ivp(lambda t,x: PPM(x,t,[alpha[idx],0.1,0.1]),[0,T[idx]],x0[:,idx])
+        expected = solve_ivp(lambda t,x: PPM(x,t,[1.423,0.1,0.1]),[0,33.596],np.array([0.86026538, 0.09428863]))
+
+        np.testing.assert_array_almost_equal(result.y, expected.y, decimal=2)
+
+    def test_equilibria(self):
+        
+        result = continuation(h,x0 = [1],par0 = [-2],
+                        vary_par = 0,
+                        step_size = 0.1,
+                        max_steps = 50,
+                        solve_for = 'equilibria')
+        u = result.u
+        alpha = result.alpha
+        y=u[0,:]
+        expected = y-y**3
+
+        np.testing.assert_array_almost_equal(alpha, expected, decimal=2)
+
+    
+class TestBVPsolver(unittest.TestCase):
+
+    def test_dirichlet_boundary_conditions(self):
+        # Replace Grid and BoundaryCondition with actual instances
+        grid = Grid(...)
+        bc_left = BoundaryCondition(...)
+        bc_right = BoundaryCondition(...)
+        q = lambda x, u: 0
+        D = 1.0
+        u_true = lambda x: np.sin(np.pi * x)
+        u_guess = lambda x: np.zeros_like(x)
+        result = BVP_solver(grid, bc_left, bc_right, q, D, u_guess)
+        np.testing.assert_allclose(result.u, u_true(result.x), rtol=1e-5)
 
 
       

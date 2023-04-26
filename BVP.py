@@ -1,13 +1,10 @@
-from scipy.optimize import fsolve, root
+from scipy.optimize import root
 from scipy.integrate import solve_ivp
-from integrate import solve_to
 import numpy as np
-import matplotlib.pyplot as plt
 from functions import PPM, hopf_normal_form
-from PDEs import construct_A_and_b, Grid, BoundaryCondition
-import scipy
+from PDEs import construct_A_and_b
 import types
-from typing import Callable, List, Tuple, Union,Optional
+from typing import Callable, Tuple, Union,Optional
 
 
 def lim_cycle_conditions(func: Callable,init:np.ndarray,parameters:np.ndarray) -> np.ndarray:
@@ -127,7 +124,7 @@ def BVP_solver(grid:object,bc_left:object,bc_right:object,q:Callable,D:Union[flo
     # Use either finite difference or scipy.optimize.root to depending on if source term is linear or nonlinear
 
     if q(1,1) != q(1,2):
-        sol = scipy.optimize.root(lambda u: D/dx**2*(A@u+b(t))+q(x,u),u_guess)
+        sol = root(lambda u: D/dx**2*(A@u+b(t))+q(x,u),u_guess)
         if not sol.success:
             raise RuntimeError('Solver failed to converge, please choose a better guess for u')
         else:
