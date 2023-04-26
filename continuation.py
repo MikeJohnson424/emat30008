@@ -1,6 +1,4 @@
 
-#%%
-
 import numpy as np
 import matplotlib.pyplot as plt
 from BVP import lim_cycle_conditions, shooting
@@ -236,33 +234,3 @@ def continuation(myode,x0,par0,vary_par=0,step_size=0.1,max_steps=50,solve_for =
                 self.alpha = alpha
 
     return result(u[:-1,:],u[-1,:])
-
-
-#%%
-
-# func = PPM
-# myode = PPM
-# x0 = [0.5,0.5,20]
-# par0 = [1,0.1,0.1]
-# solver = root
-# step_size = 0.1
-# solve_for = 'limit_cycle'
-# vary_par = 0
-
-# u_old, u_current = find_initial_solutions(root, PPM, [0.5,0.5,20],[1,0.1,0.1],0,0.1,'limit_cycle')
-# solution_FIS = solve_ivp(lambda t,x: PPM(x,t,[1,0.1,0.1]),[0,u_current[-2]], u_current[:-2])
-# plt.plot(solution_FIS.y[0],solution_FIS.y[1])
-
-# u_direct = root(lambda x: lim_cycle_conditions(PPM,x,[1,0.1,0.1]),[0.5,0.5,20]).x
-# solution_direct = solve_ivp(lambda t,x: PPM(x,t,[1,0.1,0.1]),[0,u_direct[-1]],u_direct[:-1])
-# plt.plot(solution_direct.y[0],solution_direct.y[1])
-
-# %%
-
-# result = shooting(PPM,[0.5,0.5,20],[1,0.1,0.1],root)
-# solution = solve_ivp(lambda t,x: PPM(x,t,[1,0.1,0.1]),[0,result.T], result.x0)
-
-# plt.plot(solution.y[0],solution.y[1])
-
-
-# %%

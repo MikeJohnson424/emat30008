@@ -270,7 +270,7 @@ def diffusion_solver(grid,
         Array of grid points.
     """
     
-    if bc_left and bc_right in ('neumann'):
+    if bc_left.type == 'neumann' and bc_right.type == 'neumann':
         raise ValueError('Double Neumann boundary conditions has no unique solution, terminating program.')
 
     dx = grid.dx # Grid spacing

@@ -29,7 +29,56 @@ Instructions on how to install and set up the necessary dependencies for the pro
 
 ### ODE integration
 
+This code is found in `integrate.py` and provides functions to solve Ordinary Differential Equations (ODEs) using the Forward Euler method or the Runge-Kutta 4 (RK4) method. It includes functions `euler_step`, `RK4_step`, and `solve_to`. To use this code, follow the steps below:
+
+1) Define your ODE function, initial conditions, and other parameters if required. For example:
+
+```python
+def my_function(x, t, parameters):
+    # Your ODE function implementation here
+    return x
+
+x0 = [1, 2]  # Initial conditions
+t = [0, 10]  # Time range
+parameters = []  # Additional parameters for your ODE function
+```
+
+2) Choose the integration method ('forward_euler' or 'RK4'), and the maximum time step for integration (deltat_max). For example:
+
+```python
+method = 'RK4'
+deltat_max = 0.01
+```
+
+3) Call the solve_to function with the required parameters:
+
+```python
+result = solve_to(my_function, x0, t, parameters, deltat_max, method)
+```
+
+4) Access the solution and t_span: 
+
+```python
+x_solution = result.x
+t_span = result.t_space
+```
+
+5) Plot the solution using Matplotlib:
+
+```python
+plt.plot(t_span, x_solution[0], label='x1(t)')
+plt.plot(t_span_, x_solution[1], label='x2(t)')
+plt.xlabel('Time')
+plt.ylabel('Solution')
+plt.legend()
+plt.show()
+```
+
 ### Numerical shooting
+
+This code is found in `BVP.py` and provides functions to solve for the conditions for a limit cycle of an ODE using the shooting method. It includes functions `lim_cycle_conditions` and `shooting`. The code can be used as follows:
+
+
 
 ### Numerical Continuation
 
@@ -41,12 +90,9 @@ This project uses pytest to test the code. To run the tests, type python runtest
 
 ## Profiling
 
-Explain how to profile the code, including information on performance analysis and optimization.
-
 Users can profile the major functions associated with this package by running 'profile_"function_name".py' files in the terminal. For example, to profile diffusion_solver a user can type:
 
 `python profile_diffusion_solver.py`.
-
 
 ## Report
 
@@ -54,9 +100,6 @@ The jupyter notebook `report.ipynb` contains a report on the project, consisting
 
 ## Contributions
 
-
-
 ## License
 
 Include licensing information for the project.
-
