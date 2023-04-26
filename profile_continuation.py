@@ -1,3 +1,4 @@
+
 import cProfile, pstats
 from continuation import continuation
 from functions import PPM
@@ -38,3 +39,4 @@ solve_for = 'equilibria'
 profiled_result = profile_continuation(PPM, x0, par0, vary_par, step_size, max_steps, solve_for)
 print("Solutions:", profiled_result.u)
 print("Parameter values:", profiled_result.alpha)
+# %%
