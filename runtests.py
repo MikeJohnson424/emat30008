@@ -275,7 +275,7 @@ class TestDiffusionSolver(unittest.TestCase):
 
         self.assertAlmostEqual(result,expected)
     
-# class TestContinuation(unittest.TestCase):
+class TestContinuation(unittest.TestCase):
 
     def test_limit_cycle(self):
         results = continuation(PPM, [0.5,0.5,20],[1,0.1,0.1],vary_par=0,step_size=0.1,max_steps=20,solve_for='limit_cycle')
@@ -304,19 +304,19 @@ class TestDiffusionSolver(unittest.TestCase):
         np.testing.assert_array_almost_equal(alpha, expected, decimal=2)
 
     
-class TestBVPsolver(unittest.TestCase):
+# class TestBVPsolver(unittest.TestCase):
 
-    def test_dirichlet_boundary_conditions(self):
-        # Replace Grid and BoundaryCondition with actual instances
-        grid = Grid(...)
-        bc_left = BoundaryCondition(...)
-        bc_right = BoundaryCondition(...)
-        q = lambda x, u: 0
-        D = 1.0
-        u_true = lambda x: np.sin(np.pi * x)
-        u_guess = lambda x: np.zeros_like(x)
-        result = BVP_solver(grid, bc_left, bc_right, q, D, u_guess)
-        np.testing.assert_allclose(result.u, u_true(result.x), rtol=1e-5)
+#     def test_dirichlet_boundary_conditions(self):
+#         # Replace Grid and BoundaryCondition with actual instances
+#         grid = Grid(...)
+#         bc_left = BoundaryCondition(...)
+#         bc_right = BoundaryCondition(...)
+#         q = lambda x, u: 0
+#         D = 1.0
+#         u_true = lambda x: np.sin(np.pi * x)
+#         u_guess = lambda x: np.zeros_like(x)
+#         result = BVP_solver(grid, bc_left, bc_right, q, D, u_guess)
+#         np.testing.assert_allclose(result.u, u_true(result.x), rtol=1e-5)
 
 
       

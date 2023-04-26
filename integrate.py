@@ -1,9 +1,7 @@
 
 import numpy as np
-from functions import PPM
 import matplotlib.pyplot as plt
-from typing import Callable,Union,Optional
-
+from typing import Callable,Union,Optional,Tuple
 
 def euler_step(deltat_max:float,x:np.ndarray, func:Callable,parameters:Optional[np.ndarray]=None,t:Union[float,None]=None) -> np.ndarray: # define function to compute a single euler step
 
@@ -72,11 +70,21 @@ def RK4_step(deltat_max:float,x:np.ndarray,func:Callable,parameters:np.ndarray,t
     return x_n1
 
 class solve_to_result:
-        def __init__(self,x,t_space):
-            self.x = x
-            self.t_space = t_space
+    """
+    A class representing the result of an ODE integration using the `solve_to` function.
 
-def solve_to(func:Callable, x0:np.ndarray, t:Union[float,int], parameters:np.ndarray=[], deltat_max:float=0.01, method:str = 'RK4') -> solve_to_result:
+    Attributes
+    ----------
+    x : np.ndarray
+        A numpy array containing the solution to the ODE system at each time-step.
+    t_space : np.ndarray
+        A numpy array containing the intermediate time-steps at which the ODE system was solved.
+    """
+    def __init__(self,x,t_space):
+        self.x = x
+        self.t_space = t_space
+
+def solve_to(func:Callable, x0:np.ndarray, t:Tuple[float, float], parameters:np.ndarray=[], deltat_max:float=0.01, method:str = 'RK4') -> solve_to_result:
 
     """
     A function that iterates over a time-range using a chosen integration method to solve for the solution of a 
@@ -131,7 +139,6 @@ def solve_to(func:Callable, x0:np.ndarray, t:Union[float,int], parameters:np.nda
 
     # Define arrays to store solution and iterate over time:
 
-    counter = 0
     x_old = np.array(x0) 
     t_space = np.arange(t0,t1+deltat_max,deltat_max) 
     t_space[-1] = t1 # Final time must be equal to user input t
@@ -140,7 +147,7 @@ def solve_to(func:Callable, x0:np.ndarray, t:Union[float,int], parameters:np.nda
 
     # Iterate over t_space using chosen stepper function:
       
-    for i in t_space[0:-1]:
+    for counter, i in enumerate(t_space[:-1]):
 
         x[:,counter] = x_old
         x_new = stepper(deltat_max, x_old,func,parameters,i)

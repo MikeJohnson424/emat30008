@@ -1,3 +1,5 @@
+#%%
+
 from scipy.optimize import root
 from scipy.integrate import solve_ivp
 import numpy as np
@@ -46,9 +48,11 @@ def shooting(func: Callable,init:np.ndarray,parameters:np.ndarray,solver:Callabl
         Period of limit cycle
     """
 
-    sol = solver(lambda x: lim_cycle_conditions(func,x,parameters),init).x
-    x0 = sol[:-1]
-    T = sol[-1]
+    sol = solver(lambda x: lim_cycle_conditions(func,x,parameters),init)
+    if not sol.success:
+        raise Exception("Root finder failed to converge, please adjust parameters or init.")
+    x0 = sol.x[:-1]
+    T = sol.x[-1]
     
 
     return shooting_result(x0,T)
@@ -134,3 +138,5 @@ def BVP_solver(grid:object,bc_left:object,bc_right:object,q:Callable,D:Union[flo
 
     return BVP_solver_result(u,x)
 
+
+# %%
