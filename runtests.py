@@ -5,7 +5,6 @@ import unittest
 from integrate import solve_to, RK4_step, euler_step
 from functions import*
 from BVP import lim_cycle_conditions, shooting, BVP_solver
-import unittest
 import numpy as np
 from math import isclose
 from PDEs import gen_diag_mat, Grid, BoundaryCondition, construct_A_and_b, diffusion_solver, du_dt
@@ -98,9 +97,11 @@ class TestComplementaryFunctions(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             BoundaryCondition('unrecognised bcon_type', value, grid)
+
         with self.assertRaises(TypeError):
             BoundaryCondition(bcon_type, 1, grid)
             BoundaryCondition(bcon_type, ['invalid_input'], grid)
+
 
     def test_construct_A_and_b(self):
 
@@ -183,6 +184,7 @@ class TestComplementaryFunctions(unittest.TestCase):
                 du_dt(u, t, parameters_invalid)
     
     def test_gen_sol_mat(self):
+        # Test gen_sol_mat returns correct shape of array
         result = gen_sol_mat(3, 4)
         expected_shape = (4, 5)
         self.assertEqual(result.shape, expected_shape)
@@ -303,20 +305,89 @@ class TestContinuation(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(alpha, expected, decimal=2)
 
-    
-# class TestBVPsolver(unittest.TestCase):
+class TestShooting(unittest.TestCase):
 
-#     def test_dirichlet_boundary_conditions(self):
-#         # Replace Grid and BoundaryCondition with actual instances
-#         grid = Grid(...)
-#         bc_left = BoundaryCondition(...)
-#         bc_right = BoundaryCondition(...)
-#         q = lambda x, u: 0
-#         D = 1.0
-#         u_true = lambda x: np.sin(np.pi * x)
-#         u_guess = lambda x: np.zeros_like(x)
-#         result = BVP_solver(grid, bc_left, bc_right, q, D, u_guess)
-#         np.testing.assert_allclose(result.u, u_true(result.x), rtol=1e-5)
+    def test_find_hopf_lim_cycle(self):
+
+        # test if first and last values of hopf normal form solution with limit cycle conditions are the same
+
+        hopf_param = [1,-1]
+        hopf_lim_cycle = shooting(hopf_normal_form,[0.5,0.5,20],[1,-1],root)
+        hopf_init_sol = hopf_lim_cycle.x0
+        hopf_period = hopf_lim_cycle.T
+        result_hopf = solve_ivp(lambda t,x: hopf_normal_form(x,t,hopf_param),[0, hopf_period],hopf_init_sol)
+
+        np.testing.assert_array_almost_equal(result_hopf.y[:,-1],result_hopf.y[:,0])
+
+    def test_find_PPM_limit_cycle(self):
+
+        # test if first and last values of PPM solution with limit cycle conditions are the same
+
+        PPM_param = [1,0.1,0.1]
+        PPM_lim_cycle = shooting(PPM,[0.5,0.3,20],[1,0.1,0.1],root)
+        PPM_init_sol = PPM_lim_cycle.x0
+        PPM_period = PPM_lim_cycle.T
+        result_PPM = solve_ivp(lambda t,x: PPM(x,t,PPM_param),[0,PPM_period],PPM_init_sol)
+
+        np.testing.assert_array_almost_equal(result_PPM.y[:,-1],result_PPM.y[:,0])
+
+class TestBVPsolver(unittest.TestCase):
+
+    def test_robin_dirichlet(self):
+
+        grid = Grid(100,0,1)
+        bc_left = BoundaryCondition('robin',[5,-2],grid)
+        bc_right = BoundaryCondition('dirichlet',[10],grid)
+
+        solution1 = BVP_solver(grid,bc_left,bc_right, 0, 1)
+        expected1 = np.array([-15.  , -14.75, -14.5 , -14.25, -14.  , -13.75, -13.5 , -13.25,
+        -13.  , -12.75, -12.5 , -12.25, -12.  , -11.75, -11.5 , -11.25,
+        -11.  , -10.75, -10.5 , -10.25, -10.  ,  -9.75,  -9.5 ,  -9.25,
+            -9.  ,  -8.75,  -8.5 ,  -8.25,  -8.  ,  -7.75,  -7.5 ,  -7.25,
+            -7.  ,  -6.75,  -6.5 ,  -6.25,  -6.  ,  -5.75,  -5.5 ,  -5.25,
+            -5.  ,  -4.75,  -4.5 ,  -4.25,  -4.  ,  -3.75,  -3.5 ,  -3.25,
+            -3.  ,  -2.75,  -2.5 ,  -2.25,  -2.  ,  -1.75,  -1.5 ,  -1.25,
+            -1.  ,  -0.75,  -0.5 ,  -0.25,   0.  ,   0.25,   0.5 ,   0.75,
+            1.  ,   1.25,   1.5 ,   1.75,   2.  ,   2.25,   2.5 ,   2.75,
+            3.  ,   3.25,   3.5 ,   3.75,   4.  ,   4.25,   4.5 ,   4.75,
+            5.  ,   5.25,   5.5 ,   5.75,   6.  ,   6.25,   6.5 ,   6.75,
+            7.  ,   7.25,   7.5 ,   7.75,   8.  ,   8.25,   8.5 ,   8.75,
+            9.  ,   9.25,   9.5 ,   9.75])
+        
+        np.testing.assert_array_almost_equal(solution1.u,expected1)
+
+    def test_bratu(self):
+
+        # Test for correct solution of Bratu problem
+
+        grid = Grid(100,0,1)
+        bc_left = BoundaryCondition('dirichlet',[0],grid)
+        bc_right = BoundaryCondition('dirichlet',[0],grid)
+
+        solution2 = BVP_solver(grid,bc_left,bc_right,q = lambda x,u: np.exp(0.01*u),D = 1,u_guess = 10)
+
+        expected2 = np.array([0.00495417, 0.00980834, 0.0145625 , 0.01921664, 0.02377076,
+       0.02822487, 0.03257894, 0.03683298, 0.04098698, 0.04504094,
+       0.04899486, 0.05284872, 0.05660254, 0.0602563 , 0.06380999,
+       0.06726363, 0.0706172 , 0.07387069, 0.07702411, 0.08007746,
+       0.08303072, 0.08588391, 0.088637  , 0.09129001, 0.09384292,
+       0.09629575, 0.09864847, 0.1009011 , 0.10305363, 0.10510605,
+       0.10705837, 0.10891058, 0.11066268, 0.11231467, 0.11386655,
+       0.11531831, 0.11666996, 0.11792149, 0.11907291, 0.1201242 ,
+       0.12107538, 0.12192643, 0.12267737, 0.12332817, 0.12387886,
+       0.12432942, 0.12467986, 0.12493017, 0.12508036, 0.12513042,
+       0.12508036, 0.12493017, 0.12467986, 0.12432942, 0.12387886,
+       0.12332817, 0.12267737, 0.12192643, 0.12107538, 0.1201242 ,
+       0.11907291, 0.11792149, 0.11666996, 0.11531831, 0.11386655,
+       0.11231467, 0.11066268, 0.10891058, 0.10705837, 0.10510605,
+       0.10305363, 0.1009011 , 0.09864847, 0.09629575, 0.09384292,
+       0.09129001, 0.088637  , 0.08588391, 0.08303072, 0.08007746,
+       0.07702411, 0.07387069, 0.0706172 , 0.06726363, 0.06380999,
+       0.0602563 , 0.05660254, 0.05284872, 0.04899486, 0.04504094,
+       0.04098698, 0.03683298, 0.03257894, 0.02822487, 0.02377076,
+       0.01921664, 0.0145625 , 0.00980834, 0.00495417])
+        
+        np.testing.assert_array_almost_equal(solution2.u,expected2)
 
 
       
