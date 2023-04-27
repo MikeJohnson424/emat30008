@@ -19,7 +19,6 @@ This repository contains code for solving ordinary differential equations (ODEs)
 - [Testing](#testing)
 - [Profiling](#profiling)
 - [Report](#report)
-- [License](#license)
 
 ## Installation
 
